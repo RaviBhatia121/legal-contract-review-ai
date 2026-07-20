@@ -1,0 +1,496 @@
+:root {
+  --text: #1f2430;
+  --text-muted: #5b6472;
+  --bg: #f5f6f8;
+  --panel-bg: #ffffff;
+  --border: #d8dbe0;
+  --accent: #1d4ed8;
+  --accent-contrast: #ffffff;
+
+  --risk-critical: #b91c1c;
+  --risk-high: #c2410c;
+  --risk-medium: #a16207;
+  --risk-low: #15803d;
+
+  font: 16px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #e5e7eb;
+    --text-muted: #9ca3af;
+    --bg: #14161c;
+    --panel-bg: #1c1f27;
+    --border: #2e323d;
+    --accent: #60a5fa;
+    --accent-contrast: #0b0d12;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-bg);
+}
+
+.product-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.app-header nav {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+}
+
+.app-header nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.app-header nav a.active,
+.app-header nav a:hover {
+  color: var(--accent);
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-demo {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.demo-banner {
+  background: #fef3c7;
+  color: #92400e;
+  border-bottom: 1px solid #f3d19b;
+  padding: 8px 24px;
+}
+
+.demo-banner p {
+  margin: 2px 0;
+  font-size: 0.85rem;
+}
+
+.app-main {
+  flex: 1;
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.app-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.workflow-steps {
+  color: var(--text-muted);
+  padding-left: 20px;
+}
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 32px;
+  text-align: center;
+  background: var(--panel-bg);
+}
+
+.dropzone label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.selected-file {
+  margin-top: 12px;
+  font-weight: 500;
+}
+
+.playbook-info {
+  margin-top: 16px;
+  color: var(--text-muted);
+}
+
+.playbook-info .version {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.form-error {
+  color: var(--risk-critical);
+  font-weight: 500;
+  margin-top: 12px;
+}
+
+.primary-action {
+  margin-top: 16px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.stage-progress {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  margin-top: 16px;
+}
+
+.summary-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.risk-badge {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: 700;
+  color: white;
+}
+
+.risk-badge.risk-critical,
+.finding-card.risk-critical header .risk-label {
+  background: var(--risk-critical);
+}
+
+.risk-badge.risk-high,
+.finding-card.risk-high header .risk-label {
+  background: var(--risk-high);
+}
+
+.risk-badge.risk-medium,
+.finding-card.risk-medium header .risk-label {
+  background: var(--risk-medium);
+}
+
+.risk-badge.risk-low,
+.finding-card.risk-low header .risk-label {
+  background: var(--risk-low);
+}
+
+.summary-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.summary-meta dt {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.summary-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.filters fieldset {
+  border: none;
+  display: flex;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+}
+
+.finding-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.finding-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.finding-card.risk-critical {
+  border-left-color: var(--risk-critical);
+}
+
+.finding-card.risk-high {
+  border-left-color: var(--risk-high);
+}
+
+.finding-card.risk-medium {
+  border-left-color: var(--risk-medium);
+}
+
+.finding-card.risk-low {
+  border-left-color: var(--risk-low);
+}
+
+.finding-card header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.finding-card .rule-id {
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: 700;
+}
+
+.finding-card .risk-label {
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.finding-card .missing-tag {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.finding-card .evidence {
+  margin: 8px 0;
+  padding: 10px;
+  background: var(--bg);
+  border-left: 3px solid var(--border);
+  font-style: italic;
+  user-select: text;
+}
+
+.finding-card footer {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.needs-review-tag {
+  color: var(--risk-medium);
+  font-weight: 600;
+}
+
+.retrieval-status {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.retrieval-status.retrieval-qdrant {
+  color: var(--risk-low);
+}
+
+.guidance-panel {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.guidance-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.guidance-disclaimer {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+  margin: 8px 0;
+}
+
+.guidance-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guidance-panel li {
+  padding: 10px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+
+.guidance-category {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.guidance-panel p {
+  margin: 4px 0 0;
+}
+
+.config-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.config-fields dt {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.config-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.config-fields input,
+.config-fields select {
+  font: inherit;
+  text-transform: none;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.config-fields input:disabled {
+  opacity: 0.7;
+}
+
+.config-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.config-actions button[type="button"] {
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.config-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.test-result-ok {
+  color: var(--risk-low);
+  font-weight: 500;
+  margin-top: 12px;
+}
+
+.test-result-fail {
+  color: var(--risk-critical);
+  font-weight: 500;
+  margin-top: 12px;
+}
+
+.enterprise-note {
+  color: var(--text-muted);
+}
+
+.demo-warning {
+  color: var(--risk-high);
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .app-main {
+    padding: 16px;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

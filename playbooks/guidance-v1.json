@@ -1,0 +1,229 @@
+{
+  "guidance_id": "guidance-v1",
+  "guidance_version": "1.0-draft",
+  "playbook_id": "defense-services-v1",
+  "disclaimer": "This guidance is illustrative decision-support content only, not legal advice. Production use requires validation by the client's Legal, Security, Procurement, and Compliance owners, the same requirement DEFENSE_PLAYBOOK_TEMPLATE.md places on the underlying playbook.",
+  "notes": [
+    "Every rule_id below must exist in playbooks/defense-services-v1.json; a loader test enforces this.",
+    "Text is deliberately generic and synthetic. It must never be derived from real client contracts or matters.",
+    "category is one of: negotiation_tip, approved_example, playbook_reference."
+  ],
+  "items": [
+    {
+      "id": "G-CONF-001-1",
+      "rule_id": "CONF-001",
+      "clause_type": "confidentiality",
+      "category": "negotiation_tip",
+      "text": "Push back on any carve-out that allows public or unrestricted disclosure. Confidentiality obligations should default to non-disclosure with narrowly defined exceptions (legal compulsion, prior written consent).",
+      "source_note": "Illustrative negotiation guidance, not a citation to source material."
+    },
+    {
+      "id": "G-CONF-002-1",
+      "rule_id": "CONF-002",
+      "clause_type": "confidentiality",
+      "category": "negotiation_tip",
+      "text": "When disclosure to affiliates or third parties is permitted, require both a need-to-know limitation and a written flow-down obligation binding the recipient to equivalent confidentiality terms.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-CONF-003-1",
+      "rule_id": "CONF-003",
+      "clause_type": "confidentiality",
+      "category": "approved_example",
+      "text": "Illustrative baseline clause: \"Each Party shall protect the other Party's Confidential Information using at least the same degree of care it uses for its own confidential information, and in no event less than reasonable care.\"",
+      "source_note": "Synthetic example clause for illustration only; not vetted legal language."
+    },
+    {
+      "id": "G-DATA-001-1",
+      "rule_id": "DATA-001",
+      "clause_type": "data_handling",
+      "category": "negotiation_tip",
+      "text": "Sensitive data processed or stored outside approved, client-controlled systems is a high-risk pattern in defense-sector engagements. Require an explicit approved-systems list and prohibit public cloud processing absent that approval.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-DATA-002-1",
+      "rule_id": "DATA-002",
+      "clause_type": "data_handling",
+      "category": "negotiation_tip",
+      "text": "Location, retention period, return process, and verified-deletion method should each be stated explicitly. A silent or vague term on any of these is treated as non-compliant, not neutral.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-DATA-003-1",
+      "rule_id": "DATA-003",
+      "clause_type": "data_handling",
+      "category": "negotiation_tip",
+      "text": "Cross-border transfer should require prior written approval plus approved transfer controls (e.g. an approved-jurisdictions list), not a general permission.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-DATA-004-1",
+      "rule_id": "DATA-004",
+      "clause_type": "data_handling",
+      "category": "approved_example",
+      "text": "Illustrative baseline clause: \"Supplier shall process Customer Data only within the approved processing locations listed in Schedule X, and shall return or verifiably delete all Customer Data within 30 days of termination.\"",
+      "source_note": "Synthetic example clause for illustration only."
+    },
+    {
+      "id": "G-SUB-001-1",
+      "rule_id": "SUB-001",
+      "clause_type": "subcontracting",
+      "category": "negotiation_tip",
+      "text": "Subcontractor access to services or data should require prior written approval on a per-subcontractor basis, not a blanket right to subcontract.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-SUB-002-1",
+      "rule_id": "SUB-002",
+      "clause_type": "subcontracting",
+      "category": "negotiation_tip",
+      "text": "Every material obligation the prime accepts (security, confidentiality, audit, data handling) should flow down to subcontractors in writing and be enforceable by the customer, not just the prime.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-SUB-003-1",
+      "rule_id": "SUB-003",
+      "clause_type": "subcontracting",
+      "category": "playbook_reference",
+      "text": "See DEFENSE_PLAYBOOK_TEMPLATE.md's Required Clause Rules: subcontracting is a required clause type for services agreements handling sensitive information.",
+      "source_note": "Cross-reference to the versioned playbook, not external material."
+    },
+    {
+      "id": "G-AUD-001-1",
+      "rule_id": "AUD-001",
+      "clause_type": "audit_inspection",
+      "category": "negotiation_tip",
+      "text": "A meaningful audit right should let the customer (or an independent assessor) inspect relevant controls directly, not rely solely on vendor-produced summaries. Tie audit frequency and scope to risk.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-AUD-002-1",
+      "rule_id": "AUD-002",
+      "clause_type": "audit_inspection",
+      "category": "negotiation_tip",
+      "text": "If the vendor insists on summary-only reporting, negotiate a fallback right to independent evidence or a third-party assessment under confidentiality safeguards.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-IP-001-1",
+      "rule_id": "IP-001",
+      "clause_type": "intellectual_property",
+      "category": "negotiation_tip",
+      "text": "For bespoke, paid-for deliverables, prefer customer ownership; where vendor ownership is unavoidable, require a perpetual, irrevocable, enterprise-wide license at minimum.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-IP-002-1",
+      "rule_id": "IP-002",
+      "clause_type": "intellectual_property",
+      "category": "playbook_reference",
+      "text": "This is a compliant (Low-risk) outcome under the playbook: vendor retains background IP but the customer receives a sufficient, documented license. No further negotiation is required by this rule alone.",
+      "source_note": "Cross-reference to RULE_EVALUATION_SPEC.md's IP-002 predicate."
+    },
+    {
+      "id": "G-IP-003-1",
+      "rule_id": "IP-003",
+      "clause_type": "intellectual_property",
+      "category": "playbook_reference",
+      "text": "See DEFENSE_PLAYBOOK_TEMPLATE.md's Required Clause Rules: intellectual_property is a required clause type for services agreements handling sensitive information.",
+      "source_note": "Cross-reference to the versioned playbook."
+    },
+    {
+      "id": "G-LIAB-001-1",
+      "rule_id": "LIAB-001",
+      "clause_type": "liability_indemnity",
+      "category": "negotiation_tip",
+      "text": "A liability cap that swallows confidentiality breach, data/security incidents, IP infringement, or fraud/wilful misconduct is a red flag. Require explicit carve-outs or a materially higher super-cap for these categories.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-LIAB-002-1",
+      "rule_id": "LIAB-002",
+      "clause_type": "liability_indemnity",
+      "category": "negotiation_tip",
+      "text": "Require the supplier to defend and indemnify against third-party IP infringement claims arising from its deliverables; this is standard in vendor services agreements and its absence should be flagged early.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-LIAB-003-1",
+      "rule_id": "LIAB-003",
+      "clause_type": "liability_indemnity",
+      "category": "playbook_reference",
+      "text": "See DEFENSE_PLAYBOOK_TEMPLATE.md's Required Clause Rules: liability_indemnity is a required clause type for services agreements handling sensitive information.",
+      "source_note": "Cross-reference to the versioned playbook."
+    },
+    {
+      "id": "G-TERM-001-1",
+      "rule_id": "TERM-001",
+      "clause_type": "termination_exit",
+      "category": "negotiation_tip",
+      "text": "The customer should retain termination rights for both uncured material breach and security events, with clear cure periods where appropriate. One-sided termination rights favoring only the vendor are a common negotiation gap.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-TERM-002-1",
+      "rule_id": "TERM-002",
+      "clause_type": "termination_exit",
+      "category": "negotiation_tip",
+      "text": "Exit terms should require data return, verified (not merely asserted) deletion, and reasonable transition assistance. Silence on any of these three should be treated as a gap, not accepted by default.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-TERM-003-1",
+      "rule_id": "TERM-003",
+      "clause_type": "termination_exit",
+      "category": "playbook_reference",
+      "text": "See DEFENSE_PLAYBOOK_TEMPLATE.md's Required Clause Rules: termination_exit is a required clause type for services agreements handling sensitive information.",
+      "source_note": "Cross-reference to the versioned playbook."
+    },
+    {
+      "id": "G-TERM-004-1",
+      "rule_id": "TERM-004",
+      "clause_type": "termination_exit",
+      "category": "playbook_reference",
+      "text": "This is a compliant (Low-risk) outcome under the playbook: material/security termination, data return, verified deletion, and transition assistance are all present. Accept subject to standard Legal validation.",
+      "source_note": "Cross-reference to RULE_EVALUATION_SPEC.md's TERM-004 predicate."
+    },
+    {
+      "id": "G-SEC-001-1",
+      "rule_id": "SEC-001",
+      "clause_type": "security_incident",
+      "category": "negotiation_tip",
+      "text": "Minimum security obligations (access control, encryption, logging, vulnerability management) should be stated explicitly, ideally via an incorporated security schedule, not left to general \"industry standard\" language.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-SEC-002-1",
+      "rule_id": "SEC-002",
+      "clause_type": "security_incident",
+      "category": "negotiation_tip",
+      "text": "Security incident notification should require initial notice within 24 hours of the vendor becoming aware, with continuing updates as the incident develops. A longer or undefined window is a common gap worth flagging.",
+      "source_note": "Illustrative negotiation guidance."
+    },
+    {
+      "id": "G-SEC-003-1",
+      "rule_id": "SEC-003",
+      "clause_type": "security_incident",
+      "category": "playbook_reference",
+      "text": "This is a compliant (Low-risk) outcome under the playbook: all four minimum security controls are present and the incident-notice window is within 24 hours. Accept subject to standard technical validation.",
+      "source_note": "Cross-reference to RULE_EVALUATION_SPEC.md's SEC-003 predicate."
+    },
+    {
+      "id": "G-SEC-004-1",
+      "rule_id": "SEC-004",
+      "clause_type": "security_incident",
+      "category": "playbook_reference",
+      "text": "See DEFENSE_PLAYBOOK_TEMPLATE.md's Required Clause Rules: security_incident is a required clause type for services agreements handling sensitive information.",
+      "source_note": "Cross-reference to the versioned playbook."
+    },
+    {
+      "id": "G-REV-001-1",
+      "rule_id": "REV-001",
+      "clause_type": "unknown",
+      "category": "playbook_reference",
+      "text": "Confidence below 0.60 means the classification is not treated as establishing clause presence. Route this evidence to a human reviewer rather than relying on the automated classification alone.",
+      "source_note": "Cross-reference to DEFENSE_PLAYBOOK_TEMPLATE.md's Confidence Handling section."
+    }
+  ]
+}

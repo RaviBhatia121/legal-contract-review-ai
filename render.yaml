@@ -1,0 +1,48 @@
+# P7: Render deploy config for the hosted demo only. Does not affect local
+# docker-compose.yml, ports, or the default deterministic stack in any way.
+#
+# Persistence (see docs/OPEN_DECISIONS.md D-07 and docs/SECURITY_EVIDENCE.md
+# section 10): Render's free/hobby Web Service plan does not support a
+# persistent disk. As configured below (no `disk:` block), SQLite lives on
+# the container's ephemeral filesystem — every review record is lost on
+# restart, redeploy, or platform-initiated instance recycling. This is an
+# explicit, disclosed demo-only exception: acceptable because the hosted
+# demo only ever holds synthetic data with a 24h retention window anyway
+# (Settings.retention_hours_demo), and it is NOT how the production on-prem
+# target persists data (SQLite there sits on real durable storage per
+# ADR-006/DATA_MODEL.md). To make hosted data durable instead, upgrade to a
+# paid Render plan and add:
+#   disk:
+#     name: part2-data
+#     mountPath: /data
+#     sizeGB: 1
+# and change PART2_DATABASE_URL below to point at /data/part2.db.
+
+services:
+  - type: web
+    name: part2-legal-contract-review-demo
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile.hosted
+    dockerContext: .
+    plan: free
+    healthCheckPath: /api/v1/health/live
+    envVars:
+      - key: PART2_DEPLOYMENT_MODE
+        value: demo
+      - key: PART2_DATABASE_URL
+        value: sqlite+aiosqlite:///./part2.db
+      - key: PART2_CORS_ALLOW_ORIGINS
+        value: "[]"
+      - key: PART2_PLAYBOOK_DIR
+        value: /app/playbooks
+      # Deterministic-only hosted demo (D-05 stays open): no real Ollama or
+      # Qdrant runs here. base_url_display is overridden so GET /config
+      # (reachable directly even though /admin/model is hidden in the UI)
+      # never implies a live Ollama endpoint exists in this environment.
+      - key: PART2_BASE_URL_DISPLAY
+        value: "not applicable — hosted demo is deterministic-only"
+      # Set these two in the Render dashboard, never committed here:
+      - key: PART2_DEMO_ACCESS_USERNAME
+        sync: false
+      - key: PART2_DEMO_ACCESS_PASSWORD
+        sync: false

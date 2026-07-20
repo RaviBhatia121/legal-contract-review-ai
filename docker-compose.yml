@@ -1,0 +1,107 @@
+name: legal-contract-review-ai
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8420}:8000"
+    environment:
+      PART2_DATABASE_URL: sqlite+aiosqlite:////data/part2.db
+      PART2_DEPLOYMENT_MODE: ${DEPLOYMENT_MODE:-local}
+      PART2_CORS_ALLOW_ORIGINS: '["http://localhost:${FRONTEND_PORT:-5420}"]'
+      PART2_PLAYBOOK_DIR: /app/playbooks
+      PART2_PROVIDER_TYPE: ollama
+      PART2_MODEL_NAME: ${MODEL_NAME:-qwen3:4b}
+      PART2_BASE_URL_DISPLAY: http://ollama:11434
+      # P3: deterministic by default (see Settings.clause_intelligence_mode).
+      # Set to "model" only alongside `--profile local-model` (which starts
+      # the ollama service below); never on by default.
+      PART2_CLAUSE_INTELLIGENCE_MODE: ${CLAUSE_INTELLIGENCE_MODE:-deterministic}
+      PART2_OLLAMA_BASE_URL: http://ollama:11434
+      PART2_OLLAMA_TIMEOUT_S: ${OLLAMA_TIMEOUT_S:-60}
+      # P4: retrieval is opt-in via the `retrieval` profile below. The
+      # backend always talks to Qdrant through this URL; if unreachable it
+      # degrades to `degraded_full_rules` without failing the review.
+      PART2_QDRANT_URL: http://qdrant:6333
+      PART2_QDRANT_COLLECTION: ${QDRANT_COLLECTION:-part2_guidance_v1}
+      PART2_EMBEDDING_MODEL: ${EMBEDDING_MODEL:-qllama/multilingual-e5-small}
+      # P6: optional. Unset by default — Qdrant then runs unauthenticated
+      # (its own default), which is expected/degraded whenever the
+      # `retrieval` profile isn't running at all. Set QDRANT_API_KEY in
+      # .env to enable auth; must match the qdrant service's
+      # QDRANT__SERVICE__API_KEY below. Never logged (see SECURITY_EVIDENCE.md).
+      PART2_QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      HAYSTACK_TELEMETRY_ENABLED: "False"
+    volumes:
+      - backend_data:/data
+      - ./backend/app:/app/app
+      - ./backend/scripts:/app/scripts
+      - ./playbooks:/app/playbooks:ro
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5420}:5173"
+    environment:
+      VITE_API_BASE_URL: /api/v1
+      VITE_PROXY_TARGET: http://backend:8000
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+    depends_on:
+      - backend
+
+  # Optional, opt-in only: `docker compose --profile local-model up` or
+  # `docker compose --profile retrieval up` (this service is shared by both
+  # profiles — P3 uses it for qwen3:4b classification, P4 uses it for
+  # multilingual-e5-small embeddings; either profile starts it).
+  # Not started by default docker compose up (correction #1) — pulling a
+  # multi-GB model is not something the default lightweight stack should do.
+  # After it's up: `docker compose exec ollama ollama pull qwen3:4b` (P3) and/or
+  # `docker compose exec ollama ollama pull qllama/multilingual-e5-small` (P4).
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["local-model", "retrieval"]
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  # Optional, opt-in only: `docker compose --profile retrieval up`.
+  # Not started by default docker compose up — the default deterministic
+  # stack must keep working with zero retrieval infrastructure. No host port
+  # is published; only the backend (and index_guidance.py, run inside the
+  # backend container) reach it, over the internal Compose network, per
+  # SECURITY_AND_DATA.md ("bind Qdrant privately... never publish its port").
+  # P6: no QDRANT__SERVICE__API_KEY is set here by default — verified live
+  # that Qdrant treats an *empty-string* API key as "configured" and starts
+  # requiring auth (`401 Must provide an API key`), so a naive
+  # `${QDRANT_API_KEY:-}` default would break the unauthenticated default
+  # state instead of degrading to it. To enable auth, add a
+  # docker-compose.override.yml setting QDRANT__SERVICE__API_KEY here and
+  # PART2_QDRANT_API_KEY on backend to the same value — see
+  # SECURITY_EVIDENCE.md and .env.example.
+  qdrant:
+    image: qdrant/qdrant:latest
+    profiles: ["retrieval"]
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  backend_data:
+  ollama_data:
+  qdrant_data:

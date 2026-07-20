@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0-draft",
+  "document": {
+    "name": "sentinel-support-agreement.pdf",
+    "page_count": 8,
+    "language": "en"
+  },
+  "review_summary": {
+    "overall_risk": "Critical",
+    "findings_total": 8,
+    "findings_by_risk": {
+      "Critical": 1,
+      "High": 5,
+      "Medium": 0,
+      "Low": 2
+    },
+    "missing_clause_count": 1,
+    "needs_review_count": 0
+  },
+  "findings": [
+    {
+      "finding_type": "deviation",
+      "clause_type": "confidentiality",
+      "section_reference": "Section 9.3",
+      "page": 3,
+      "risk_label": "High",
+      "rule_id": "CONF-002",
+      "evidence_text": "The Supplier may disclose Confidential Information to its Affiliates for purposes related to this Agreement."
+    },
+    {
+      "finding_type": "deviation",
+      "clause_type": "data_handling",
+      "section_reference": "Section 6.2",
+      "page": 2,
+      "risk_label": "Critical",
+      "rule_id": "DATA-001",
+      "evidence_text": "The Supplier may process Customer Data using regional public cloud services and shall not transfer Customer Data outside the region without prior written consent."
+    },
+    {
+      "finding_type": "deviation",
+      "clause_type": "subcontracting",
+      "section_reference": "Section 11.1",
+      "page": 4,
+      "risk_label": "High",
+      "rule_id": "SUB-001",
+      "evidence_text": "The Supplier may grant a subcontractor access to Sensitive Data upon prior notice to the Buyer."
+    },
+    {
+      "finding_type": "compliant",
+      "clause_type": "intellectual_property",
+      "section_reference": "Section 13.1",
+      "page": 5,
+      "risk_label": "Low",
+      "rule_id": "IP-002",
+      "evidence_text": "The Buyer owns all bespoke Deliverables created under this Agreement. The Supplier retains ownership of pre-existing Background IP and grants the Buyer a perpetual, irrevocable license to use Background IP embedded in the Deliverables."
+    },
+    {
+      "finding_type": "deviation",
+      "clause_type": "liability_indemnity",
+      "section_reference": "Section 15.4",
+      "page": 6,
+      "risk_label": "High",
+      "rule_id": "LIAB-001",
+      "evidence_text": "Each party's aggregate liability, including liability arising from breach of confidentiality, security incidents, intellectual property infringement, or fraud, shall not exceed the fees paid in the preceding twelve months."
+    },
+    {
+      "finding_type": "compliant",
+      "clause_type": "termination_exit",
+      "section_reference": "Section 17.2",
+      "page": 7,
+      "risk_label": "Low",
+      "rule_id": "TERM-004",
+      "evidence_text": "Upon termination for material breach or a security incident, the Supplier shall return or verifiably delete all Customer Data and provide reasonable transition assistance."
+    },
+    {
+      "finding_type": "deviation",
+      "clause_type": "security_incident",
+      "section_reference": "Section 8.1",
+      "page": 3,
+      "risk_label": "High",
+      "rule_id": "SEC-002",
+      "evidence_text": "The Supplier shall maintain administrative, technical, and physical safeguards consistent with industry standards to protect Customer Data."
+    }
+  ],
+  "missing_clauses": [
+    {
+      "finding_type": "missing_clause",
+      "clause_type": "audit_inspection",
+      "risk_label": "High",
+      "rule_id": "AUD-001"
+    }
+  ],
+  "note": "As of P2, this file is the verified actual API output (see backend/tests/test_reviews_golden_path.py), produced by the deterministic rule engine (backend/app/services/rule_engine.py) over this fixture's known synthetic wording. It is fixture-oriented deterministic extraction, not general contract understanding; see DEFENSE_PLAYBOOK_TEMPLATE.md. Page numbers are measured from the actual generated PDF."
+}

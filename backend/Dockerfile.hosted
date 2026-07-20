@@ -1,0 +1,46 @@
+# P7: hosted-demo image only. Builds the frontend and serves it same-origin
+# from the backend (see app/main.py's SPA fallback route), so the hosted
+# deployment needs a single container/service and never has to solve CORS
+# for its own frontend. Local development is unaffected — docker-compose.yml
+# and backend/Dockerfile still run frontend/backend as two separate
+# containers with hot reload, unchanged by this file.
+#
+# Build (from repo root):
+#   docker build -f backend/Dockerfile.hosted -t part2-hosted-demo .
+# Run locally to verify before deploying:
+#   docker run --rm -p 8000:8000 \
+#     -e PART2_DEPLOYMENT_MODE=demo \
+#     -e PART2_DEMO_ACCESS_USERNAME=demo \
+#     -e PART2_DEMO_ACCESS_PASSWORD=change-me \
+#     -e PART2_DATABASE_URL=sqlite+aiosqlite:////data/part2.db \
+#     -v part2-hosted-demo-data:/data \
+#     part2-hosted-demo
+#
+# Deterministic-only by design (D-05 stays open): no PART2_PROVIDER_TYPE,
+# PART2_OLLAMA_BASE_URL, or PART2_QDRANT_URL are set here — there is no
+# Ollama/Qdrant in the hosted environment, and PUT /config is backend-locked
+# whenever PART2_DEPLOYMENT_MODE=demo regardless. See docs/SECURITY_EVIDENCE.md
+# section 10 and docs/OPEN_DECISIONS.md D-05/D-07.
+
+FROM node:22-slim AS frontend-build
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+FROM python:3.11-slim
+WORKDIR /app
+
+COPY backend/pyproject.toml ./
+COPY backend/app ./app
+COPY backend/scripts ./scripts
+COPY playbooks ./playbooks
+
+RUN pip install --no-cache-dir -e .
+
+COPY --from=frontend-build /frontend/dist ./static
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
