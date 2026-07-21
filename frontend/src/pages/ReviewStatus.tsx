@@ -114,21 +114,17 @@ export function ReviewStatus() {
       {result.document && result.review_summary && result.provenance && (
         <>
           <SummaryPanel document={result.document} summary={result.review_summary} provenance={result.provenance} />
-          <section
-            className={`guidance-status-card guidance-status-${result.provenance.retrieval_mode}`}
-            aria-label="Supplemental guidance status"
-          >
-            <h2>
-              {result.provenance.retrieval_mode === "qdrant"
-                ? "Qdrant supplemental guidance active"
-                : "Qdrant guidance unavailable"}
-            </h2>
-            <p>
-              {result.provenance.retrieval_mode === "qdrant"
-                ? "Related playbook guidance was retrieved after rule evaluation. It supports reviewer context only and cannot change risk labels."
-                : "The review completed with deterministic playbook rules only. Risk labels, rule IDs, and missing-clause output are unaffected."}
-            </p>
-          </section>
+          {result.provenance.retrieval_mode === "qdrant" && (
+            <section
+              className="guidance-status-card guidance-status-qdrant"
+              aria-label="Supplemental guidance status"
+            >
+              <h2>Supplemental playbook guidance active</h2>
+              <p>
+                Related playbook guidance was retrieved after rule evaluation. It supports reviewer context only and cannot change risk labels.
+              </p>
+            </section>
+          )}
         </>
       )}
       <FindingsList findings={result.findings ?? []} missingClauses={result.missing_clauses ?? []} />

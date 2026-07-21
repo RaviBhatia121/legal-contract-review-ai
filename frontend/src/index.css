@@ -530,10 +530,6 @@ body {
   border-left: 4px solid var(--risk-low);
 }
 
-.guidance-status-degraded_full_rules {
-  border-left: 4px solid var(--gold);
-}
-
 .guidance-panel {
   margin-top: 14px;
   padding: 10px 12px;

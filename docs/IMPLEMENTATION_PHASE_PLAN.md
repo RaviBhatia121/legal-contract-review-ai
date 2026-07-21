@@ -977,9 +977,10 @@ Implemented per the approved proposal, exactly matching all stated guardrails.
   approval is required. Targeted validation: backend golden-path tests passed and frontend
   findings/golden-path tests passed.
 - **P9.3 Qdrant Guidance Visibility:** dashboard now shows Qdrant guidance coverage as an
-  operating-mode card; completed review pages show `Qdrant supplemental guidance active` or
-  `Qdrant guidance unavailable` with explicit "rule review unaffected" copy. Raw enum
-  values such as `degraded_full_rules` remain hidden from users. Targeted validation:
+  operating-mode card; completed review pages show a supplemental guidance card only when
+  Qdrant guidance is active. When Qdrant is unavailable, the large unavailable card is
+  hidden and the compact summary line keeps "Guidance unavailable, rule review unaffected."
+  Raw enum values such as `degraded_full_rules` remain hidden from users. Targeted validation:
   dashboard/findings/architecture frontend tests passed and build passed.
 - **Behavior guardrail:** no rule-engine predicates, risk aggregation, playbook JSON,
   model-adapter behavior, or Qdrant retrieval behavior changed.

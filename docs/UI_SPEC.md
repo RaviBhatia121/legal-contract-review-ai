@@ -198,8 +198,9 @@ all nav items are visible in both local and demo modes. The page fetches
 ## Guidance Visibility
 **Implemented as P9.3** (`frontend/src/pages/Dashboard.tsx`, `frontend/src/pages/ReviewStatus.tsx`):
 - Dashboard shows Qdrant guidance coverage as a real operating-mode card.
-- Completed review pages show a `Supplemental guidance status` card:
-  `Qdrant supplemental guidance active` or `Qdrant guidance unavailable`.
+- Completed review pages show a `Supplemental guidance status` card only when Qdrant
+  guidance is active. When Qdrant is unavailable, the large status card is hidden and the
+  compact summary line says "Guidance unavailable, rule review unaffected."
 - The raw enum `degraded_full_rules` must never be shown to users.
 - Copy must state that rule review is unaffected when Qdrant guidance is unavailable.
 

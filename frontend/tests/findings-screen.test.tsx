@@ -194,15 +194,14 @@ describe("findings screen (P8.5 polish)", () => {
     expect(screen.getAllByText(/legal approval required/i).length).toBeGreaterThan(0);
   });
 
-  it("explains degraded Qdrant guidance without exposing the raw enum", async () => {
+  it("does not show a distracting degraded Qdrant status card or raw enum", async () => {
     vi.mocked(getReview).mockResolvedValue(RESULT);
     renderFindingsScreen();
 
     await waitFor(() => expect(screen.getByText("sentinel-support-agreement.pdf")).toBeInTheDocument());
 
-    const guidanceStatus = screen.getByLabelText(/supplemental guidance status/i);
-    expect(guidanceStatus).toHaveTextContent(/Qdrant guidance unavailable/i);
-    expect(guidanceStatus).toHaveTextContent(/review completed with deterministic playbook rules only/i);
+    expect(screen.queryByLabelText(/supplemental guidance status/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/guidance unavailable, rule review unaffected/i)).toBeInTheDocument();
     expect(screen.queryByText(/degraded_full_rules/i)).not.toBeInTheDocument();
   });
 });
