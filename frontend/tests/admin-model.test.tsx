@@ -72,8 +72,8 @@ describe("AdminModel", () => {
 
     expect(screen.getByText(/not a chatbot setting/i)).toBeInTheDocument();
     expect(screen.getByText(/final risk labels come from the rule engine/i)).toBeInTheDocument();
-    expect(screen.getByText(/d-05 remains open/i)).toBeInTheDocument();
-    expect(screen.getByText(/no cloud adapter is enabled by this screen/i)).toBeInTheDocument();
+    expect(screen.getByText(/ollama is the enabled provider/i)).toBeInTheDocument();
+    expect(screen.getByText(/gemini remain disabled catalog placeholders/i)).toBeInTheDocument();
     expect(screen.getByText(/disabled placeholders: anthropic, openai, gemini/i)).toBeInTheDocument();
   });
 
@@ -148,15 +148,15 @@ describe("AdminModel", () => {
     expect(screen.getByText(/reachability check only/i)).toBeInTheDocument();
   });
 
-  it("shows the demo-mode configuration lock message", async () => {
+  it("does not show a demo-mode lock warning in the polished hosted admin screen", async () => {
     vi.mocked(getConfig).mockResolvedValue({ ...BASE_CONFIG, deployment_mode: "demo", synthetic_data_only: true });
     vi.mocked(getProviders).mockResolvedValue(PROVIDERS);
 
     renderAdmin();
 
     await waitFor(() => expect(screen.getByDisplayValue("demo")).toBeInTheDocument());
-    expect(screen.getByText(/demo mode locks production configuration changes server-side/i)).toBeInTheDocument();
-    expect(screen.getByText(/clears on service restart/i)).toBeInTheDocument();
+    expect(screen.queryByText(/demo mode locks production configuration changes server-side/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/clears on service restart/i)).not.toBeInTheDocument();
   });
 
   it("shows a failed test-connection result without exposing provider internals", async () => {

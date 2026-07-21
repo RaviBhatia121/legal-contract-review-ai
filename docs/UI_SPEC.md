@@ -9,18 +9,14 @@ An intranet-style Legal Contract Risk Review portal. The interface is task-orien
 - `/reviews/{id}`: processing status or completed findings
 - `/admin/playbook`: read-only active playbook viewer
 - `/admin/model`: runtime provider configuration
-- Global: product name, Demo mode badge when active, synthetic-data warning, architecture/about link
+- Global: product name, navigation, architecture/about link
 
 **P7 hosted-demo presentation:** when `deployment_mode: demo`, the full navigation remains
 visible (`Dashboard`, `New review`, `Architecture`, `Playbook`, `Admin`) so evaluators can
-inspect the complete product surface. The hosted demo is deterministic-only, and `PUT
-/config` is separately backend-locked in demo mode regardless of UI visibility
-(`docs/API_CONTRACT.md`). A persistent, non-dismissible banner
-(`DemoModeBanner`, `frontend/src/components/DemoModeBadge.tsx`) is shown
-below the header carrying two messages: (1) synthetic-data-only /
-no-real-document warning, and (2) the case-study narrative disclaimer —
-this hosted URL is a synthetic demo convenience, not the production
-on-prem deployment target. See `docs/SECURITY_EVIDENCE.md` section 10.
+inspect the complete product surface. The hosted demo is model-capable through Ollama when
+Render is configured with a reachable `PART2_OLLAMA_BASE_URL`; `PUT /config` is separately
+backend-locked in demo mode regardless of UI visibility (`docs/API_CONTRACT.md`). No global
+demo-warning banner or badge is shown in the polished handoff UI.
 
 **P8.2 brand and shell:** the app shell (header, nav, footer) uses a
 navy/gold visual language matching the Part 1/Part 3 case-study artifacts
@@ -65,7 +61,8 @@ all nav items are visible in both local and demo modes. The page fetches
 - Allowed types, 15 MB limit, and 100-page processing limit shown before selection
 - Selected document name and size
 - Playbook name and version, read-only for the PoC
-- Synthetic-data acknowledgement required in hosted Demo mode
+- Synthetic-data handling is documented in the runbook/security docs; no global demo warning
+  banner is shown in the polished hosted UI
 - Primary action: `Review contract`
 - Inline validation errors with safe remediation
 - **P8.4 (Upload Screen Polish, implemented):** the screen now opens with a `New Legal
@@ -81,8 +78,8 @@ all nav items are visible in both local and demo modes. The page fetches
   (`UploadForm` no longer takes a `playbookId` prop). Upload mechanics (drag/drop, browse,
   file-type/size validation, error handling, submit behavior, and the `Review contract`
   button and drag-and-drop label wording) are unchanged. No demo-mode acknowledgement
-  checkbox was added — the existing global demo banner (`App.tsx`) already carries that
-  disclosure; this remains a known, deferred UI item, not part of P8.4 scope.
+  checkbox was added; synthetic-data handling is covered in docs/runbook rather than a
+  global UI warning.
 
 ## Processing Screen
 - Client-side pre-job stages: uploading and validating file
@@ -139,30 +136,30 @@ all nav items are visible in both local and demo modes. The page fetches
   for any other provider, and rejected if malformed
 - Credential field is a write-only password input, never pre-filled from `GET /config`;
   saved state displays only `Credential configured` via the placeholder
-- In hosted Demo mode, an admin-entered credential is an in-memory override and the UI states
-  that it clears on service restart
+- Hosted Demo runtime settings are supplied through Render environment variables; credentials
+  remain write-only and are never displayed
 - Save action and Connection test action (`Test connection` button) with a visible
   success/failure result and latency, or the real rejection message on validation failure
 - Visible statement that Docker Ollama/local is the PoC verification path and local inference is the target enterprise mode
-- Visible warning that cloud-provider processing is for synthetic Demo data only
+- Provider catalog makes unavailable cloud providers visibly disabled
 - **P8.6 (Admin Screen Polish, implemented):** `/admin/model` now presents the same
   configuration controls inside a clearer enterprise settings layout: a `Runtime Provider
   Configuration` heading, an explanatory lede that this is provider orchestration for the
   structured review pipeline (not a chatbot setting), a three-card posture summary
   (deterministic rule-engine authority, Docker Ollama/local runtime path, hosted-provider
   placeholders), a current-config summary card, a provider catalog with `Enabled`/`Not
-  enabled` pills, and separate security/connection-test panels. The screen explicitly states
-  that D-05 remains open and no cloud adapter is enabled by the UI. Credentials remain
+  enabled` pills, and separate security/connection-test panels. The screen states that
+  Ollama is the enabled provider and cloud providers remain disabled placeholders. Credentials remain
   write-only and never pre-filled or displayed after save; `Test connection` is labelled as a
-  reachability check only, not a review run. Demo-mode copy states that production
-  configuration changes remain server-side locked and any admin-entered credential clears on
-  service restart. Existing API calls and save/test behavior are unchanged.
+  reachability check only, not a review run. The polished hosted UI does not show demo-mode
+  lock warnings; backend `PUT /config` remains locked in demo mode. Existing API calls and
+  save/test behavior are unchanged.
 
 ## Admin Playbook Screen
 **Implemented as P8.8** (`frontend/src/pages/AdminPlaybook.tsx`):
 - Route: `/admin/playbook`
 - Nav label: `Playbook`
-- Hidden in hosted Demo mode with the rest of Admin/configuration navigation.
+- Visible in hosted Demo mode so reviewers can inspect the complete product surface.
 - Uses `GET /api/v1/playbooks/active`.
 - Read-only view of the active `defense-services-v1` playbook.
 - Shows playbook id, version, 27-rule count, 8 required clause-family count, severity

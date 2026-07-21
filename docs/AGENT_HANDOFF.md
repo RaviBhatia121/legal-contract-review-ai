@@ -39,8 +39,9 @@ draft support on all finding/missing-clause items.
 **P7 status note:** the actual live public Render URL is **deferred to a later
 polish/optimization phase, not a P7/P8 blocker.** All hosted-demo packaging and its local
 verification are complete and accepted as-is (`backend/Dockerfile.hosted`, `render.yaml`,
-Basic Auth, demo banner, demo-mode config lock, same-origin serving). D-05 (hosted model provider) remains
-deliberately open — the hosted demo is deterministic-only by design.
+Basic Auth, backend config lock, same-origin serving, Ollama model-mode env support). D-05
+is accepted for Ollama-only hosted model execution when Render can reach the configured
+endpoint.
 
 **AI fallback transparency note:** if model mode is requested but the local Ollama/model path
 is unavailable, the review completes via deterministic playbook fallback and discloses that
@@ -74,7 +75,7 @@ to a public AI service") that deliberately avoids "on-premises"/"on-prem"/"air-g
 wording since the same screen can run in hosted Demo mode. The inline `.playbook-info` line
 and the now-unused `playbookId` prop were removed from `UploadForm.tsx`; upload mechanics
 (drag/drop, validation, error handling, submit) are unchanged. No demo-mode acknowledgement
-checkbox was added — the existing global demo banner already covers that disclosure, and
+checkbox was added; synthetic-data handling is documented in runbook/security docs, and
 adding new gating logic was explicitly declined as out of scope. P8.5 restyled
 `/reviews/:reviewId`'s completed-review view: a `Review result` page heading and a
 compliance banner ("Findings are decision support only, not legal advice. Final risk
@@ -390,14 +391,12 @@ At the end of every implementation session, update:
 - P7 implemented per the approved plan and its 5 corrections: (1) `render.yaml` uses Render's
   free Web Service plan by default, with SQLite on ephemeral container storage explicitly
   documented (no persistent disk on that tier; a paid-plan/disk upgrade path is documented
-  but not adopted); (2) D-07 accepted as Render, Docker Web Service; (3) D-05 stays
-  deliberately open — the hosted demo is deterministic-only, no provider/Ollama/Qdrant env
-  vars are set anywhere in the hosted config; (4) `/admin/model` is hidden from the frontend
-  nav in demo mode **and** `PUT /config` is separately, unconditionally backend-locked in
-  demo mode (`routes_config.py`), not just UI-hidden; (5) a persistent, non-dismissible
-  `DemoModeBanner` states both the synthetic-data warning and the case-study narrative
-  disclaimer ("this hosted URL is a synthetic demo convenience... not the target production
-  architecture... fully on-premises"), echoed in `README.md`/`DEMO_RUNBOOK.md`/new ADR-012.
+  but not adopted); (2) D-07 accepted as Render, Docker Web Service; (3) D-05 accepted for
+  Ollama-only hosted model execution via Render env (`PART2_OLLAMA_BASE_URL`, sync false);
+  (4) full frontend nav is visible in demo mode **and** `PUT /config` is separately,
+  unconditionally backend-locked in demo mode (`routes_config.py`), not just UI-hidden;
+  (5) global demo-warning UI removed for evaluator handoff; synthetic/demo limitations are
+  documented in `README.md`/`DEMO_RUNBOOK.md`/ADR-012.
   Added `DemoBasicAuthMiddleware` (`backend/app/core/middleware.py`, outermost middleware,
   fails closed if demo mode is on without configured credentials, `/health/live` exempt) and
   `backend/Dockerfile.hosted` (multi-stage: builds the frontend, serves it same-origin from
@@ -429,10 +428,9 @@ At the end of every implementation session, update:
   (`ai-boardroom-*`, `omniflow-*`) are unaffected.
 
 ## Open Decisions
-See `OPEN_DECISIONS.md`. D-07 is accepted (Render, Docker Web Service packaging; the live
-deploy itself is deferred to a later polish phase). D-05 remains explicitly open — the
-hosted demo is deterministic-only by design, so no real hosted-provider adapter was needed or
-built.
+See `OPEN_DECISIONS.md`. D-07 is accepted (Render, Docker Web Service packaging). D-05 is
+accepted for Ollama-only hosted model execution; no proprietary/cloud hosted-provider adapter
+was built.
 
 ## Blockers
 No open blocker for P0-P7. The live public Render URL is not a blocker — it is deferred to a

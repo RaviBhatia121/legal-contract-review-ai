@@ -113,23 +113,6 @@ body {
   font-weight: 600;
 }
 
-.badge-demo {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.demo-banner {
-  background: #fef3c7;
-  color: #92400e;
-  border-bottom: 1px solid #f3d19b;
-  padding: 8px 24px;
-}
-
-.demo-banner p {
-  margin: 2px 0;
-  font-size: 0.85rem;
-}
-
 .app-main {
   flex: 1;
   width: min(960px, 100%);
@@ -1223,11 +1206,6 @@ body {
 
 .enterprise-note {
   color: var(--text-muted);
-}
-
-.demo-warning {
-  color: var(--risk-high);
-  font-weight: 500;
 }
 
 .sr-only {

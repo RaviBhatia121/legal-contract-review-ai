@@ -35,8 +35,10 @@ Contract-specific repositories may offer a faster-looking start, but their deplo
 ## ADR-002: Provider-Neutral Model Integration
 
 ### Status
-Accepted for prototype planning. As of P7, the hosted demo does not use a
-cloud provider at all (deterministic-only, D-05 stays open) — see ADR-012.
+Accepted for prototype planning. As of the hosted handoff update, the public
+Render demo uses the same Ollama adapter when `PART2_OLLAMA_BASE_URL` points
+to a Render-reachable endpoint; no proprietary/cloud model adapter is
+implemented.
 
 ### Decision
 The application must expose one internal model interface. The admin screen may configure an Ollama-compatible endpoint or an approved cloud provider for the hosted demonstration.
@@ -149,9 +151,10 @@ Production multilingual claims require a bilingual playbook, Indonesian legal re
 Accepted (P7)
 
 ### Decision
-The hosted demo (D-07: Render, Docker Web Service) is deterministic-only —
-no model provider, Ollama, or Qdrant runs in that environment (D-05 stays
-open). Frontend and backend are served **same-origin** from one container:
+The hosted demo (D-07: Render, Docker Web Service) is model-capable through
+Ollama when `PART2_OLLAMA_BASE_URL` points to a Render-reachable endpoint.
+Qdrant remains absent from the hosted environment, so supplemental guidance
+degrades cleanly. Frontend and backend are served **same-origin** from one container:
 `backend/Dockerfile.hosted` builds the frontend and copies its static
 output into the backend image, which serves it via a catch-all SPA-fallback
 route registered after the API routers. Access is gated by an app-level
@@ -165,19 +168,18 @@ section 10).
 ### Reason
 This keeps the hosted demo a thin packaging exercise on top of the existing
 architecture rather than a second product surface: no new cross-origin
-attack surface, no cloud model credentials to manage, and a single
+attack surface, no proprietary cloud model adapter, and a single
 Dockerfile that never touches `docker-compose.yml`, local ports, or the
 default deterministic dev flow.
 
 ### Consequences
-- The hosted demo cannot demonstrate the P3 model-assisted or P4 retrieval
-  paths live; those remain evidenced by the local Docker Ollama/Qdrant
-  verification recorded in P3/P4 completion notes.
-- Every hosted-facing surface (UI banner, `DEMO_RUNBOOK.md`, `README.md`)
-  must state that the hosted URL is a synthetic demo convenience, not the
-  production on-prem architecture — the production target remains fully
-  on-premises.
-- A future real hosted persistence or hosted model-provider decision (D-05)
+- The hosted demo can demonstrate the P3 model-assisted path if Render can
+  reach the configured Ollama endpoint. It cannot reach private LAN IPs such
+  as `192.168.x.x`; use an approved public/VPN/tunnel route when live hosted
+  model execution is required.
+- The hosted demo does not demonstrate the P4 Qdrant retrieval path live;
+  retrieval remains evidenced by local Docker Qdrant verification.
+- A future real hosted persistence decision
   would need its own explicit acceptance and is out of scope for P7.
 
 ## Change Rule

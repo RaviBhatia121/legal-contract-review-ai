@@ -46,7 +46,7 @@ All items are `pending` until implementation begins.
 - [x] Add tests proving Qdrant cannot change applicable rule IDs or severities. (`test_guidance_attachment.py`'s before/after risk-field snapshot, plus a live docker-compose diff of retrieval-on vs retrieval-off API responses — see `IMPLEMENTATION_PHASE_PLAN.md` P4 Completion Notes.)
 
 ## P5: Admin and Provider Configuration — complete
-- [x] Add Demo mode banner. (`frontend/src/components/DemoModeBadge.tsx`, pre-existing since P0, wired into `App.tsx`'s header; shows "Demo mode — synthetic data only" when `deployment_mode === "demo"`.) **Not done, out of P5's approved scope:** a synthetic-data acknowledgement checkbox on the upload screen (`UI_SPEC.md` Review Screen) — the approved P5 plan scoped this phase to admin/provider configuration only, not the upload flow; deferred, not silently completed.
+- [x] Add hosted-demo safety posture. Initially implemented as a global UI warning; final handoff removes the global warning for a cleaner evaluator experience and keeps synthetic-data handling in runbook/security docs. **Not done, out of P5's approved scope:** a synthetic-data acknowledgement checkbox on the upload screen (`UI_SPEC.md` Review Screen) — the approved P5 plan scoped this phase to admin/provider configuration only, not the upload flow; deferred, not silently completed.
 - [x] Implement admin provider configuration UI. (`AdminModel.tsx` rewritten as an editable form: provider select, model name, base URL, write-only credential, Save, Test connection — see `IMPLEMENTATION_PHASE_PLAN.md` P5 notes.)
 - [x] Implement server-side secret handling and redacted configuration APIs. (Unchanged, already correct since P0/P3: credential is write-only, never returned, held only as a boolean `has_credential` flag — verified by test that the submitted value never appears in any response.)
 - [ ] Implement selected hosted model adapter after D-05 is accepted or replaced. (Explicitly **not done** — D-05 remains Open; P5 demonstrates provider portability via UI/catalog/interface only, per the approved corrections.)
@@ -75,9 +75,8 @@ All items are `pending` until implementation begins.
 - [x] Same-origin frontend/backend serving for the hosted image. (`backend/Dockerfile.hosted`
   multi-stage build + `app/main.py` SPA-fallback route; no cross-origin case for the hosted
   deployment's own UI.)
-- [x] Demo banner and case-study narrative disclaimer. (`DemoModeBanner` — persistent,
-  non-dismissible, states synthetic-data-only and "not the target production architecture...
-  fully on-premises," echoed in `README.md`/`DEMO_RUNBOOK.md`/ADR-012.)
+- [x] Hosted demo presentation polished. Global demo-warning banner removed for evaluator
+  handoff; synthetic/demo limitations documented in `README.md`/`DEMO_RUNBOOK.md`/ADR-012.
 - [x] Build and verify the hosted image locally. (`docker build -f backend/Dockerfile.hosted`,
   ran with `docker run`, verified auth/config-lock/static-serving/SPA-fallback via `curl` —
   see `docs/SECURITY_EVIDENCE.md` §10.)
@@ -138,7 +137,7 @@ the deploy action itself and its downstream evidence are deferred.
   to a public AI service") — deliberately avoiding "on-premises"/"on-prem"/"air-gapped"
   wording since the same screen can run in hosted Demo mode. The legal disclaimer stays in
   the global footer (not duplicated). Upload mechanics unchanged; no demo-mode
-  acknowledgement checkbox added (existing global demo banner already covers it).
+  acknowledgement checkbox added; synthetic-data handling is documented in runbook/security docs.
 - [x] Enhance Findings screen with stronger severity hierarchy, quote-style evidence,
   rule-ID tags, supplemental guidance presentation, missing-clause distinction, filters,
   and provenance panel. `ReviewStatus.tsx` now shows a `Review result` heading and a

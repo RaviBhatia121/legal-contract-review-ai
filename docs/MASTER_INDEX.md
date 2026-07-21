@@ -56,9 +56,9 @@ Use this file as the entry point for all Part 2 work.
   demo access Basic Auth, backend-locked config, same-origin frontend/backend serving, all
   verified against the built hosted Docker image run locally; see `IMPLEMENTATION_PHASE_PLAN.md`
   P0-P7 Completion/Live Verification Notes and `docs/SECURITY_EVIDENCE.md` for the factual
-  command/result evidence). The deterministic P2 path remains the default for clause
-  extraction and retrieval; no real hosted model provider was implemented, and the hosted
-  demo is deterministic-only by design (D-05 remains deliberately open).
+  command/result evidence). The deterministic P2 path remains the fallback for clause
+  extraction; hosted model execution uses the same Ollama adapter when Render can reach the
+  configured endpoint (D-05 accepted for Ollama only).
 - **P7 is complete and accepted.** D-07 is accepted (Render, `render.yaml`/
   `backend/Dockerfile.hosted` packaging). Actually running that config against a live Render
   account to obtain a real public URL is **explicitly deferred to a later
@@ -118,6 +118,5 @@ Use this file as the entry point for all Part 2 work.
 - At the end of every implementation phase, follow the enforcement checklist in `IMPLEMENTATION_PHASE_PLAN.md`.
 - If an architecture decision changes, update `ARCHITECTURE_DECISIONS.md` before implementation.
 - D-07 is accepted (Render, Docker Web Service packaging) and P7 hosted-demo packaging is
-  complete. D-05 remains open — do not implement a real hosted model provider until D-05 is
-  explicitly accepted. Going live on a public URL is deferred to a later polish/optimization
-  phase; this is not a P7 blocker.
+  complete. D-05 is accepted for Ollama-only hosted model execution; do not implement a
+  proprietary/cloud hosted model provider without a new decision.

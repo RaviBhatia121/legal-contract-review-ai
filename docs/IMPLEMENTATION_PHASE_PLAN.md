@@ -27,9 +27,9 @@ At the end of every phase:
 | P2 Deterministic Playbook Engine | complete | Encoded defense playbook (`playbooks/defense-services-v1.json`), fixture-oriented deterministic segmentation/attribute extraction, deterministic rule evaluator, missing-clause checks, risk aggregation | Findings are produced from extracted/normalized contract evidence and mapped to rule IDs/severities | Golden fixture returns exact expected rule IDs/counts; summary matches findings; rule tests pass; docs updated |
 | P3 Model-Assisted Clause Intelligence | complete | Haystack pipeline, provider-neutral model adapter, Docker Ollama/Qwen local path (opt-in), structured JSON validation, prompt-injection resistance | AI assists clause classification and attribute extraction while application rules still own decisions | Docker Ollama `qwen3:4b` path completes fixture (**verified live**, 3/3 runs plus 1 egress-blocked run, identical rule IDs/severities/missing-clauses/overall-risk/confidences); invalid model JSON fails safely (verified, mocked); fixed fallback remains separate from acceptance evidence (verified); docs updated |
 | P4 Retrieval and Guidance | complete | Qdrant integration (real queries, not a JSON lookup), local `qllama/multilingual-e5-small` embeddings via Docker Ollama, authored guidance corpus (27 items), degraded retrieval mode | Findings can show supplemental guidance without retrieval controlling rule applicability | Qdrant ranks guidance only (**verified live**: retrieval-on vs retrieval-off produce byte-identical rule IDs/severities/missing-clauses/overall-risk); complete rule set is always evaluated; degraded mode preserves fixture outcome (verified, Qdrant unreachable); docs updated |
-| P5 Admin and Provider Configuration | complete | Editable admin config API/UI, redacted secrets, provider catalog (`GET /config/providers`), Ollama endpoint settings with reject-not-ignore validation; no hosted-provider adapter (D-05 remains open) | Admin can demonstrate provider portability and Demo mode without exposing credentials | Config never returns secrets (verified); only `ollama` selectable/saveable, others shown "Not enabled" and rejected server-side if submitted (verified live); `base_url` rejected for non-ollama or invalid format (verified live); docs updated |
+| P5 Admin and Provider Configuration | complete | Editable admin config API/UI, redacted secrets, provider catalog (`GET /config/providers`), Ollama endpoint settings with reject-not-ignore validation; no proprietary/cloud hosted-provider adapter | Admin can demonstrate provider portability and Demo mode without exposing credentials | Config never returns secrets (verified); only `ollama` selectable/saveable, others shown "Not enabled" and rejected server-side if submitted (verified live); `base_url` rejected for non-ollama or invalid format (verified live); docs updated |
 | P6 Security and Evidence Hardening | complete | SSRF hardening (mode-gated blocklist), defense-in-depth upload size guard, log redaction, PoC retention enforcement, optional Qdrant API-key auth, CORS/egress evidence, `docs/SECURITY_EVIDENCE.md` | Prototype has credible defense-sector security evidence and local-model verification | Security tests pass (verified, 26 new backend tests); local egress-blocked default-mode fixture run captured (**verified live**, byte-identical to normal-networking baseline); three-run local-model variance already recorded in P3 (cross-referenced, not redone); docs updated |
-| P7 Hosted Demo and Polish | complete | Deployment packaging (`backend/Dockerfile.hosted`, `render.yaml`), D-07 accepted as Render, hosted-demo Basic Auth access gate, backend-locked config in demo mode, same-origin frontend/backend serving, demo banner + case-study narrative disclaimer | Deployable hosted-demo image presents a polished synthetic demo workflow and case-study narrative | Hosted image built and verified locally against every check a live deploy would need (see `SECURITY_EVIDENCE.md` §10); D-07 accepted (Render, packaging), D-05 deliberately stays open (deterministic-only hosted demo); docs updated. **Explicitly deferred to a later polish/optimization phase, by decision, not a P7 exit-criteria gap:** actually running the committed `render.yaml`/`backend/Dockerfile.hosted` against a live Render account to obtain a public URL — `docs/DEMO_RUNBOOK.md`'s hosted URL and generated-fixture-artifact fields stay `TBD` until that later phase. |
+| P7 Hosted Demo and Polish | complete | Deployment packaging (`backend/Dockerfile.hosted`, `render.yaml`), D-07 accepted as Render, hosted-demo Basic Auth access gate, backend-locked config in demo mode, same-origin frontend/backend serving, Ollama model-mode env support | Deployable hosted-demo image presents a polished workflow and can use model-assisted review when Render reaches the configured Ollama endpoint | Hosted image built and verified locally against every check a live deploy would need (see `SECURITY_EVIDENCE.md` §10); D-07 accepted (Render, packaging), D-05 accepted for Ollama-only hosted model execution; docs updated |
 | P8 UI/UX and Demo Polish | complete | Dashboard/history API and UI, product branding, upload-screen playbook/local-processing explanation, findings readability, admin visual polish, read-only playbook viewer, final validation | Prototype feels like a credible intranet legal AI product while preserving the structured non-chat workflow | `GET /reviews` summary list works without leaking evidence/full findings and respects retention (**done, P8.1**); dashboard metrics are real (**done, P8.3**); branding/default scaffold feel removed (**done, P8.2**); upload screen explains the playbook/pipeline/output honestly without on-premises claims (**done, P8.4**); findings screen is scannable, discloses decision-support/rule-engine-sourced risk/non-scoring guidance, and preserves every field (**done, P8.5**); admin screen demonstrates provider portability without enabling cloud adapters or exposing credentials (**done, P8.6**); read-only Admin Playbook viewer exposes active playbook/rules without CRUD (**done, P8.8**); no rule/model/retrieval behavior changes; backend tests 163/163, frontend tests 33/33, frontend build, Docker health, live upload smoke test, and docs reconciliation passed |
 | P9 Case-Study Alignment | complete | `/architecture` stack/data-flow page, approved-template drafting support keyed by rule ID, explicit Qdrant guidance status cards | Reviewer can see the required local tech stack/model/vector DB/backend/frontend walkthrough, Legal drafting support, and retrieval status without ambiguity | Backend 164/164 passed; frontend 38/38 passed; frontend build clean; Docker rebuilt; live upload completed with model mode, no fallback, Critical risk, and approved-template draft support on every finding/missing-clause item |
 
@@ -56,8 +56,8 @@ At the end of every phase:
   cover" section.
 - P7 is complete: it implements the hosted-demo packaging and every control planned for it
   (D-07 accepted as Render; demo access auth; backend-locked config; same-origin serving),
-  all verified against the built hosted Docker image run locally. D-05 stays deliberately
-  open — the hosted demo is deterministic-only, so no hosted model provider was needed.
+  all verified against the built hosted Docker image run locally. D-05 is accepted for
+  Ollama-only hosted model execution when Render can reach the configured endpoint.
   Actually deploying the committed `render.yaml` / `backend/Dockerfile.hosted` to a live
   Render account to get a real public URL is **explicitly deferred to a later
   polish/optimization phase, by decision** — not treated as unfinished P7 scope.
@@ -582,21 +582,20 @@ Implemented per the approved plan and its 5 corrections. Full factual evidence l
 - **D-07 (correction #2):** accepted as Render, Docker Web Service
   (`backend/Dockerfile.hosted`, `render.yaml`), persistence explicitly marked ephemeral per
   the caveat above.
-- **D-05 (correction #3):** stays open. The hosted demo is deterministic-only — no
-  `PART2_PROVIDER_TYPE`/`PART2_OLLAMA_BASE_URL`/`PART2_QDRANT_URL` are set anywhere in the
-  hosted config, so there is no model provider or vector store reachable from the hosted
-  environment at all. No cloud model adapter was implemented.
+- **D-05 (correction #3):** accepted for Ollama only. `render.yaml` sets
+  `PART2_PROVIDER_TYPE=ollama`, `PART2_CLAUSE_INTELLIGENCE_MODE=model`, and keeps
+  `PART2_OLLAMA_BASE_URL` as `sync: false` so the Render-reachable endpoint is supplied
+  only through hosted environment configuration. No proprietary/cloud model adapter was
+  implemented; Qdrant is still absent from hosted and degrades cleanly.
 - **Admin config lock (correction #4):** `/admin/model` remains visible in the frontend nav
   for demo transparency, **but** `PUT /config`
   (`backend/app/api/routes_config.py`) unconditionally rejects with `CONFIGURATION_INVALID`
   in demo mode regardless of payload — a backend lock, not reliance on UI hiding.
   Verified both via automated tests and a direct authenticated `curl PUT` against the built
   hosted image.
-- **Case-study narrative (correction #5):** the persistent, non-dismissible
-  `DemoModeBanner` (`frontend/src/components/DemoModeBadge.tsx`) states both the
-  synthetic-data warning and "this hosted URL is a synthetic demo convenience... not the
-  target production architecture... fully on-premises," shown on every screen in demo mode.
-  The same disclaimer is echoed in `README.md`, `docs/DEMO_RUNBOOK.md`, and ADR-012.
+- **Case-study narrative (correction #5):** the polished hosted UI no longer shows a global
+  demo-warning banner; synthetic-only/demo limitations are documented in `README.md`,
+  `docs/DEMO_RUNBOOK.md`, `docs/SECURITY_EVIDENCE.md`, and ADR-012.
 - **Hosted-demo access control:** new `DemoBasicAuthMiddleware`
   (`backend/app/core/middleware.py`), outermost middleware, active only when
   `deployment_mode: demo`; fails closed (`503`) if credentials are unconfigured rather than
@@ -619,8 +618,8 @@ Implemented per the approved plan and its 5 corrections. Full factual evidence l
   `SECURITY_EVIDENCE.md` §10.
 - **Tests:** 7 new backend tests (149 total: 6 `test_demo_access.py`, 1
   `test_update_config_rejected_unconditionally_in_demo_mode`); 2 new frontend tests (10
-  total: `demo-mode.test.tsx`, banner/on-prem-disclaimer shown and full nav visible in demo
-  mode, no banner in local mode). Full backend
+  total: `demo-mode.test.tsx`, full nav visible and no global demo-warning banner in demo
+  or local mode). Full backend
   (`python -m pytest -q`) and frontend (`npm run build`, `npm run test -- --run`) suites
   green.
 - **Deferred, not a P7 gap (explicit user decision on review):** the actual live Render
@@ -694,8 +693,7 @@ Implemented per the approved proposal, with Codex's 1 doc correction applied.
 - **Palette:** `frontend/src/index.css` `:root` (and its `prefers-color-scheme: dark`
   override) now define `--navy`/`--gold` and repoint `--accent` at `--navy`, matching the
   navy/gold visual language already used in the Part 1/Part 3 case-study artifacts.
-  **`--risk-*` and the demo-mode warning colors (`badge-demo`/`demo-banner`) are
-  deliberately unchanged** — those are semantic/warning colors, not brand colors. Gold is
+  **`--risk-*` colors are deliberately unchanged** — those are semantic colors, not brand colors. Gold is
   used only as a non-text accent (active-nav underline, focus outline) to avoid a WCAG
   contrast failure that gold-as-text-color would cause.
 - **Typography:** font stack changed to `"Aptos", "Helvetica Neue", Arial, system-ui,
@@ -703,8 +701,7 @@ Implemented per the approved proposal, with Codex's 1 doc correction applied.
 - **Shell:** header gets a navy bottom border, wordmark + product name lockup, gold
   active/hover nav underline; footer lightly restyled; new `:focus-visible` outline styles
   (previously absent — a real accessibility gap, now closed) for keyboard navigation; a
-  mobile breakpoint added so the header/nav wraps cleanly under 640px instead of
-  overflowing next to the demo badge.
+  mobile breakpoint added so the header/nav wraps cleanly under 640px.
 - **Nav unchanged (doc-corrected before implementation):** stays `New review` +
   conditional `Admin` only. No `Dashboard` link was added — that route is P8.3's, and a
   link to a route that doesn't exist yet would look broken. The shell is visually ready to
@@ -712,11 +709,11 @@ Implemented per the approved proposal, with Codex's 1 doc correction applied.
 - **No route changes:** `/` still redirects to `/review/new`, confirmed unchanged in
   `App.tsx`. **No backend changes.** **No markup changes** to `ReviewNew.tsx`,
   `ReviewStatus.tsx`, `AdminModel.tsx`, `FindingCard.tsx`, `FindingsList.tsx`,
-  `StageProgress.tsx`, `SummaryPanel.tsx`, `UploadForm.tsx`, or `DemoModeBadge.tsx` — their
-  colors shift only via the shared CSS variables, as anticipated in the approved proposal.
+  `StageProgress.tsx`, `SummaryPanel.tsx`, or `UploadForm.tsx` — their colors shift only via
+  the shared CSS variables, as anticipated in the approved proposal.
 - **Verification:** `npm run test -- --run` — 10/10 pass, no test edits needed (exact nav
-  label text and demo-banner copy preserved, satisfying `demo-mode.test.tsx`'s assertions
-  unchanged). `npm run build` — clean. Rebuilt and ran the hosted-image-adjacent local
+  label text preserved, satisfying `demo-mode.test.tsx`'s assertions unchanged).
+  `npm run build` — clean. Rebuilt and ran the hosted-image-adjacent local
   Docker frontend container (`docker compose up -d --build frontend`) since
   `frontend/public/` isn't bind-mounted in `docker-compose.yml` (only `src/` and
   `index.html` are) — confirmed via browser screenshot in light mode, dark mode, desktop
@@ -815,8 +812,7 @@ Implemented per the approved proposal, exactly matching all stated guardrails.
   (`dashboard-workflow` → `workflow-strip`) to match the renamed shared class; no other
   changes.
 - **Explicitly declined, per approved scope:** no demo-mode acknowledgement checkbox was
-  added (the existing global, non-dismissible `DemoModeBanner` in `App.tsx` already carries
-  that disclosure; adding new interactive gating logic was judged out of scope for a
+  added; adding new interactive gating logic was judged out of scope for a
   visual-polish phase and was explicitly called out and confirmed with the user before
   implementation).
 - **Tests:** new `frontend/tests/review-new.test.tsx` (5 tests) — playbook card renders the
@@ -910,12 +906,11 @@ Implemented per the approved proposal, exactly matching all stated guardrails.
   field, Ollama base URL field, write-only credential field, Save, and Test connection
   behavior are preserved.
 - **Provider-status guardrail:** Ollama remains the only enabled/saveable provider. Anthropic,
-  OpenAI, and Gemini are shown as disabled placeholders only; the screen explicitly states
-  D-05 remains open and no cloud adapter is enabled by the UI.
+  OpenAI, and Gemini are shown as disabled placeholders only; no proprietary/cloud adapter is
+  enabled by the UI.
 - **Security guardrail:** credentials remain write-only and are never pre-filled or displayed
   after save. The connection test is labelled as a reachability check only and explicitly
-  does not run a review or expose credentials. Demo-mode copy states production
-  configuration changes remain server-side locked and admin-entered credentials clear on
+  does not run a review or expose credentials. Backend `PUT /config` remains locked in demo mode.
   service restart.
 - **`frontend/src/index.css`:** added scoped admin card/catalog/security/connection-panel
   styles using the existing navy/gold palette and semantic status colors.

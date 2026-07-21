@@ -35,12 +35,23 @@ services:
         value: "[]"
       - key: PART2_PLAYBOOK_DIR
         value: /app/playbooks
-      # Deterministic-only hosted demo (D-05 stays open): no real Ollama or
-      # Qdrant runs here. base_url_display is overridden so GET /config
-      # (reachable directly even though /admin/model is hidden in the UI)
-      # never implies a live Ollama endpoint exists in this environment.
+      # Hosted demo uses the same model-assisted path as local when
+      # PART2_OLLAMA_BASE_URL points to a Render-reachable Ollama endpoint.
+      # Do not use a private LAN IP here (for example 192.168.x.x); Render
+      # cannot reach it. Use a secured public/VPN/tunnel endpoint if model
+      # execution must be shown from the hosted URL.
+      - key: PART2_PROVIDER_TYPE
+        value: ollama
+      - key: PART2_MODEL_NAME
+        value: qwen3.6:35b
+      - key: PART2_CLAUSE_INTELLIGENCE_MODE
+        value: model
+      - key: PART2_OLLAMA_TIMEOUT_S
+        value: "180"
       - key: PART2_BASE_URL_DISPLAY
-        value: "not applicable — hosted demo is deterministic-only"
+        value: "configured, hidden"
+      - key: PART2_OLLAMA_BASE_URL
+        sync: false
       # Set these two in the Render dashboard, never committed here:
       - key: PART2_DEMO_ACCESS_USERNAME
         sync: false

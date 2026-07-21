@@ -28,12 +28,14 @@ before presenting.
 - Demo user/access method: HTTP Basic Auth (`DemoBasicAuthMiddleware`), credentials set
   via `PART2_DEMO_ACCESS_USERNAME`/`PART2_DEMO_ACCESS_PASSWORD` in the Render dashboard,
   never committed; distribute the password to reviewers out-of-band, not in this doc
-- Active model provider: none — the hosted demo is deterministic-only (P7, D-05 stays
-  open); there is no Ollama or Qdrant reachable from the hosted environment
+- Active model provider: Ollama, when `PART2_OLLAMA_BASE_URL` is set in Render to a
+  Render-reachable endpoint. Do not use a private LAN address such as `192.168.x.x`;
+  Render cannot reach it. If the endpoint is unavailable, reviews fall back to deterministic
+  playbook rules.
 - Synthetic sample contract: `Sentinel Systems Support Services Agreement`
 - Expected review result fixture: defined in `DEMO_FIXTURE_SPEC.md`; generated artifact `TBD`
-- Demo-mode banner visible: yes — persistent, non-dismissible (`DemoModeBanner`), states
-  synthetic-data-only and the on-prem production-target disclaimer
+- Global warning visible: no — the public handoff UI is kept clean. Synthetic-only handling
+  remains documented here and protected by Basic Auth/short retention.
 - Successful Docker Ollama local-model verification recorded: yes — 3 runs plus 1 egress-blocked run, `qwen3:4b`, see `IMPLEMENTATION_PHASE_PLAN.md` P3 Live Verification Notes
 - Three-run local confidence and variance record: all 4 runs identical (High risk, 7 findings, confidence 0.9 throughout, zero variance)
 - Hosted persistence: **ephemeral** (Render free plan, no persistent disk) — review
@@ -42,19 +44,18 @@ before presenting.
   `docs/SECURITY_EVIDENCE.md` §10.
 
 ## Presentation Sequence
-1. Open the Legal Review portal (hosted URL, behind the demo access prompt) and point out the structured workflow and the demo-mode banner.
+1. Open the Legal Review portal (hosted URL, behind the demo access prompt) and point out the structured workflow.
 2. Upload the synthetic sample contract.
 3. Start the review and show the fixed processing stages.
 4. Present overall risk, clause findings, missing clauses, evidence, and actions.
-5. Note that `/admin/model` is intentionally not exposed on this hosted instance — the
-   hosted demo is deterministic-only (P7). Switch to a local-mode screen-share or
-   screenshots to show the admin configuration screen instead: Ollama as the only saveable
-   provider, Anthropic/OpenAI/Gemini shown disabled in the catalog to demonstrate provider
-   portability, and credentials never revealed.
+5. Open `/admin/model` to show provider portability: Ollama as the enabled provider,
+   Anthropic/OpenAI/Gemini shown disabled in the catalog, and credentials never revealed.
+   Use Test connection to confirm the hosted Ollama endpoint.
 6. Explain that the hosted URL is a synthetic demo convenience only — the target
    architecture runs entirely inside the enterprise environment using Docker-based Ollama
    (and, if retrieval is enabled, Qdrant) for the PoC validation path, with zero cloud
-   calls. The hosted instance itself makes no model calls at all.
+   calls. The hosted instance uses a configured Ollama endpoint only when that endpoint is
+   reachable from Render; otherwise deterministic fallback is explicit in the review result.
 7. Close with the security and data-handling boundaries, including the hosted-only
    exceptions (Basic Auth access gate, ephemeral hosted storage) called out as demo-only,
    not production equivalents — see `docs/SECURITY_EVIDENCE.md` §10.

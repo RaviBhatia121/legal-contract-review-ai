@@ -117,7 +117,7 @@ Status markers below reflect P1 (real parsing); P2+ replace the fixed-fixture fi
 - [x] Configuration cannot be changed in hosted demo mode, even by an authenticated client.
   (P7: `backend/tests/test_health.py::test_update_config_rejected_unconditionally_in_demo_mode`
   — `PUT /config` unconditionally returns `CONFIGURATION_INVALID` when
-  `deployment_mode: demo`; a backend lock, not just a hidden admin nav link. See
+  `deployment_mode: demo`; a backend lock independent of frontend navigation. See
   `SECURITY_EVIDENCE.md` §10.)
 - [x] Hosted frontend/backend have no cross-origin surface. (P7: served same-origin from one
   container — `backend/Dockerfile.hosted` + `app/main.py`'s SPA fallback route; verified by
@@ -166,9 +166,8 @@ That is P3 scope.
 - A reviewer can understand the workflow without explanation from the builder.
 - One synthetic contract completes end to end from a hosted URL, behind the demo access gate.
 - The final evidence pack contains a successful egress-blocked Docker Ollama/Qwen run of the
-  same golden fixture, recorded locally (P3/`SECURITY_EVIDENCE.md`); the hosted demo itself is
-  deterministic-only (P7, D-05 stays open) and does not run a model live — it is presented as
-  a packaging/access convenience, not model-path evidence.
+  same golden fixture, recorded locally (P3/`SECURITY_EVIDENCE.md`); the hosted demo can run
+  the same Ollama adapter when Render is configured with a reachable `PART2_OLLAMA_BASE_URL`.
 - The live hosted run and local verification run are clearly distinguished from the fixed-result fallback.
 - High and Critical findings are visually obvious.
 - Evidence and the triggered playbook rule are visible.

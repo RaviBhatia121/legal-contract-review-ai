@@ -34,8 +34,8 @@ The prototype demonstrates a security-conscious architecture; it is not certifie
   Auth whenever `deployment_mode: demo`, failing closed if credentials are
   unconfigured (D-06). Admin authorization specifically: `PUT /config` is
   additionally, unconditionally locked in demo mode regardless of the
-  Basic Auth gate, since the hosted demo offers nothing to configure
-  (deterministic-only, D-05 stays open). `PUT /config` remains
+  Basic Auth gate; hosted runtime settings are supplied through Render
+  environment variables. `PUT /config` remains
   unauthenticated in **local** mode by design — this is a single-operator
   local dev/PoC assumption, disclosed, not silently gapped.
 - Restrict CORS to the deployed frontend origin.

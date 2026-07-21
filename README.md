@@ -105,9 +105,12 @@ the full corrections list. P6 deliberately does not implement admin authenticati
 rate limiting (no hosted deployment exists yet at that point — that's P7 scope).
 
 P7 packages a shareable hosted demo without weakening the on-prem architecture claim. The
-hosted demo is **deterministic-only** — no model provider, Ollama, or Qdrant runs there, so
-D-05 (hosted model provider) stays deliberately open rather than being forced by hosting
-needs. D-07 (hosting platform) is accepted as Render, Docker Web Service
+hosted demo is **model-capable** when Render is configured with a reachable Ollama endpoint
+(`PART2_OLLAMA_BASE_URL`) and runs `PART2_CLAUSE_INTELLIGENCE_MODE=model`; deterministic
+rules remain the fallback if the provider is unavailable. Render cannot reach private LAN
+addresses such as `192.168.x.x`, so the hosted model endpoint must be exposed through an
+approved public/VPN/tunnel route if live model execution is required from the hosted URL.
+D-07 (hosting platform) is accepted as Render, Docker Web Service
 (`render.yaml`, `backend/Dockerfile.hosted`); persistence on the default free plan is
 **ephemeral SQLite** (no persistent disk on that tier) — a disclosed demo-only exception, not
 production-equivalent, with a documented paid-plan upgrade path not adopted for this PoC.
@@ -117,10 +120,9 @@ builds the frontend and the backend serves its static output via a SPA-fallback 
 `DemoBasicAuthMiddleware` (`backend/app/core/middleware.py`) gates every request behind HTTP
 Basic Auth whenever `deployment_mode: demo`, failing closed if credentials are unconfigured;
 `/health/live` stays exempt for the platform's own process check. `PUT /config` is
-additionally, unconditionally locked in demo mode at the backend — not just hidden from the
-admin nav — since the hosted demo has nothing to configure. A persistent, non-dismissible
-banner states both the synthetic-data warning and the case-study narrative: **this hosted
-URL is a synthetic demo convenience, not the production on-prem deployment target.** All of
+additionally, unconditionally locked in demo mode at the backend; hosted runtime settings
+are controlled through Render environment variables, not browser edits. The visible UI is
+kept clean for evaluator handoff and does not show a global demo-warning banner. All of
 this was built and verified against the hosted image run locally with `docker build`/`docker
 run` — see `docs/SECURITY_EVIDENCE.md` section 10. Actually deploying it to a live Render
 URL is **explicitly deferred to a later polish/optimization phase**, by decision, and is not
@@ -207,8 +209,9 @@ runtime/data later with `docker compose down -v` if you no longer need it.
 
 ## Hosted demo image (P7)
 
-`backend/Dockerfile.hosted` and `render.yaml` package a **separate, deterministic-only**
-image for a hosted demo — see "Current Phase" above for what this does and does not imply.
+`backend/Dockerfile.hosted` and `render.yaml` package a hosted image that can run the same
+Ollama model-assisted path when `PART2_OLLAMA_BASE_URL` is set to a Render-reachable endpoint
+— see "Current Phase" above for what this does and does not imply.
 This does not affect `docker compose up` above in any way (different Dockerfile, never
 referenced by `docker-compose.yml`). Build and run it locally to verify before deploying:
 ```

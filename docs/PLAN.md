@@ -53,11 +53,11 @@ Out of scope:
 - [x] Admin/configuration screen: complete (P5 — editable form with provider select, model name, Ollama base URL, write-only credential, Save, and Test connection; only `ollama` saveable, others shown "Not enabled" and rejected server-side; `/config/test` real Ollama ping since P3)
 - [x] Model-assisted clause intelligence: complete (P3 — provider-neutral adapter, Ollama adapter, lazy Haystack pipeline, schema-validated model output, real classification-based `DOCUMENT_NOT_APPLICABLE`); current browser-demo runtime uses shared on-prem Ollama VM (`qwen3.6:35b`) with rules-only fallback; historical live Docker Ollama verification passed (4/4 runs identical), see `IMPLEMENTATION_PHASE_PLAN.md` P3 Live Verification Notes
 - [x] Supplemental retrieval and guidance: complete (P4 — Qdrant-backed guidance retrieval keyed by rule_id, real local embeddings via Docker Ollama `qllama/multilingual-e5-small`, 27-item authored guidance corpus, post-processing only — `rule_engine.py` untouched); live docker-compose diff confirmed retrieval-on/off produce identical rule outcomes, see `IMPLEMENTATION_PHASE_PLAN.md` P4 Completion Notes
-- [x] Provider portability admin UI: complete (P5 — no real hosted adapter; D-05 remains open), see `IMPLEMENTATION_PHASE_PLAN.md` P5 Completion Notes
+- [x] Provider portability admin UI: complete (P5/P7 — Ollama is the only enabled adapter; hosted model mode uses the same Ollama adapter when Render reaches the configured endpoint), see `IMPLEMENTATION_PHASE_PLAN.md` P5/P7 Completion Notes
 - [x] Security-conscious local deployment setup: complete (P6 — SSRF hardening, defense-in-depth upload size guard, log redaction, PoC retention enforcement, optional Qdrant API-key auth, CORS/egress evidence; factual record in `docs/SECURITY_EVIDENCE.md`)
 - [x] Hosted demo packaging: complete (P7 — `backend/Dockerfile.hosted`, `render.yaml`, demo
-  access auth, backend-locked config, same-origin serving, demo banner with case-study
-  narrative disclaimer; built and verified locally, see `docs/SECURITY_EVIDENCE.md` §10)
+  access auth, backend-locked config, same-origin serving, Ollama model-mode env support;
+  built and verified locally, see `docs/SECURITY_EVIDENCE.md` §10)
 - [ ] Hosted demo live URL: **deferred to a later polish/optimization phase, by explicit
   decision — not a P7 blocker.** Packaging is complete and accepted as-is; only the actual
   Render deploy action and its downstream evidence (screenshots, filled-in runbook `TBD`
@@ -84,7 +84,7 @@ Out of scope:
   behavior preserved; 4 new frontend tests, 26/26 total; 158/158 backend unaffected); P8.6
   Admin Screen Polish complete (`/admin/model` now has runtime-provider posture cards,
   current-config summary, provider catalog cards, security notes, and connection-test panel;
-  cloud providers remain disabled placeholders, D-05 remains open, credentials remain
+  cloud providers remain disabled placeholders, D-05 accepted for Ollama-only hosted model execution, credentials remain
   write-only; 28/28 frontend tests); P8.7 final validation complete (backend 158/158,
   frontend 28/28, frontend build clean, Docker backend/frontend healthy, live fixture upload
   completed with `overall_risk: Critical`, 7 findings, and 1 missing clause); P8.8 Admin
@@ -99,7 +99,7 @@ See `IMPLEMENTATION_PHASE_PLAN.md` for phase-level delivery contracts and end-of
 - P2 Deterministic Playbook Engine: complete
 - P3 Model-Assisted Clause Intelligence: complete (4/4 live Docker Ollama `qwen3:4b` runs identical, including 1 egress-blocked)
 - P4 Retrieval and Guidance: complete (live retrieval-on/off comparison confirmed identical rule outcomes)
-- P5 Admin and Provider Configuration: complete (provider portability via UI/catalog/interface only; no real cloud adapter, D-05 remains open)
+- P5 Admin and Provider Configuration: complete (provider portability via UI/catalog/interface only; no proprietary/cloud adapter; D-05 accepted for Ollama-only hosted model execution)
 - P6 Security and Evidence Hardening: complete (SSRF/redaction/retention/Qdrant-auth/CORS/egress-blocked evidence; see `docs/SECURITY_EVIDENCE.md`)
 - P7 Hosted Demo and Polish: complete — the live public URL is deferred to a later polish/optimization phase by explicit decision, not treated as open P7 scope; see `docs/IMPLEMENTATION_PHASE_PLAN.md` P7 Completion Notes and `docs/DEMO_RUNBOOK.md`
 - P8 UI/UX and Demo Polish: complete — see `docs/P8_UI_UX_POLISH_PLAN.md` and `docs/IMPLEMENTATION_PHASE_PLAN.md` P8.1-P8.8 Completion Notes; hosting/live URL and PDF/export remain out of scope

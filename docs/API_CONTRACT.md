@@ -214,15 +214,15 @@ Update allowed runtime configuration. Hosted mode requires admin authorization.
 
 **P7 implementation:** unconditionally rejected with `CONFIGURATION_INVALID`
 whenever `deployment_mode: demo`, regardless of payload — the hosted demo is
-deterministic-only and has nothing to configure (D-05 stays open). This is a
-backend lock, independent of frontend navigation visibility; a direct API client cannot bypass it. See
+configured through Render environment variables, not browser edits. This is a backend lock,
+independent of frontend navigation visibility; a direct API client cannot bypass it. See
 `docs/SECURITY_EVIDENCE.md` section 10.
 
 Rules:
 - `provider_type` must be in the full catalog **and** currently implemented — as of P5, only
   `ollama` (`_SAVEABLE_PROVIDERS`); any other value is **rejected** with
-  `CONFIGURATION_INVALID`, not silently accepted or ignored, since D-05 (hosted demo
-  provider) remains open. This is a saveable-config restriction, separate from the display
+  `CONFIGURATION_INVALID`, not silently accepted or ignored. This is a saveable-config
+  restriction, separate from the display
   catalog above.
 - `base_url` is **rejected**, not silently ignored, if the effective provider is not
   `ollama` — cloud-provider base URLs are fixed by backend code.
@@ -243,7 +243,7 @@ Test the saved provider without returning provider response bodies or secrets.
 
 As of P3, this performs a real reachability check for `provider_type: ollama` (a `GET
 /api/tags` ping against the configured base URL). Any other provider_type returns
-`PROVIDER_UNAVAILABLE` honestly — no cloud adapter is implemented (D-05 remains open). As of
+`PROVIDER_UNAVAILABLE` honestly — no cloud adapter is implemented. As of
 P5, the admin UI's "Test connection" button calls this endpoint directly and displays the
 result. If the configured model is unavailable, the Admin UI explicitly says model-assisted
 review is unavailable and reviews will use deterministic fallback until Ollama/model is

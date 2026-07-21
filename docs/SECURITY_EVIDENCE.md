@@ -222,13 +222,15 @@ See `RISK_REGISTER.md` for how each risk's status changed and
   served unauthenticated. `/api/v1/health/live` is exempt so the hosting
   platform's own process check is not credential-gated.
 - `PUT /api/v1/config` unconditionally rejects with `CONFIGURATION_INVALID`
-  when `deployment_mode == "demo"`, regardless of payload — a backend lock,
-  not just a hidden admin nav link in the frontend (`backend/app/api/
-  routes_config.py`).
-- The hosted demo is deterministic-only: no `PART2_PROVIDER_TYPE`,
-  `PART2_OLLAMA_BASE_URL`, or `PART2_QDRANT_URL` are set in `render.yaml` —
-  there is no model provider or vector store reachable from the hosted
-  environment (D-05 stays open).
+  when `deployment_mode == "demo"`, regardless of payload — a backend lock independent of
+  frontend navigation (`backend/app/api/routes_config.py`).
+- The hosted demo is model-capable through Ollama when `PART2_OLLAMA_BASE_URL`
+  is set in Render to a Render-reachable endpoint. `render.yaml` sets
+  `PART2_PROVIDER_TYPE=ollama`, `PART2_CLAUSE_INTELLIGENCE_MODE=model`, and
+  `PART2_MODEL_NAME=qwen3.6:35b`; `PART2_OLLAMA_BASE_URL` is intentionally
+  `sync: false` so no endpoint is committed. Render cannot reach private LAN
+  addresses such as `192.168.x.x`; use only an approved public/VPN/tunnel
+  endpoint for hosted model execution.
 - Frontend and backend are served same-origin from one container
   (`backend/Dockerfile.hosted` builds the frontend, copies `dist/` into
   `/app/static`, and `app/main.py`'s SPA fallback route serves it), so the
@@ -255,8 +257,8 @@ runs the deploy, per `docs/DEMO_RUNBOOK.md`.
 
 Automated coverage: `backend/tests/test_demo_access.py` (6 tests),
 `backend/tests/test_health.py::test_update_config_rejected_unconditionally_in_demo_mode`,
-`frontend/tests/demo-mode.test.tsx` (2 tests — full nav visible and demo
-banner/on-prem disclaimer shown only in demo mode).
+`frontend/tests/demo-mode.test.tsx` (2 tests — full nav visible and no global
+demo warning banner in either local or demo mode).
 
 **Persistence — explicit demo-only exception:** the default `render.yaml`
 configuration uses Render's free Web Service plan, which does not support a

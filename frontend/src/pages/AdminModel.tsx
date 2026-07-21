@@ -107,8 +107,8 @@ export function AdminModel() {
         <section className="admin-info-card">
           <h2>Hosted providers</h2>
           <p>
-            Anthropic, OpenAI, and Gemini are catalog placeholders only. D-05 remains open;
-            no cloud adapter is enabled by this screen.
+            Ollama is the enabled provider for hosted and local model-assisted review.
+            Anthropic, OpenAI, and Gemini remain disabled catalog placeholders.
           </p>
         </section>
       </div>
@@ -220,13 +220,6 @@ export function AdminModel() {
               <input value={config.playbook_id} disabled readOnly />
             </label>
           </div>
-
-          {config.deployment_mode === "demo" && (
-            <p className="demo-warning">
-              Demo mode locks production configuration changes server-side. Any admin-entered
-              credential is an in-memory override and clears on service restart.
-            </p>
-          )}
 
           <div className="security-notes" aria-label="Configuration security notes">
             <h2>Security notes</h2>

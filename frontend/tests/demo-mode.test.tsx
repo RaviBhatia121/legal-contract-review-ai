@@ -34,7 +34,7 @@ function renderApp() {
 }
 
 describe("App demo-mode presentation (P7)", () => {
-  it("shows the admin nav link and no demo banner in local mode", async () => {
+  it("shows the full nav and no demo warning in local mode", async () => {
     vi.mocked(getConfig).mockResolvedValue(BASE_CONFIG);
 
     renderApp();
@@ -44,20 +44,18 @@ describe("App demo-mode presentation (P7)", () => {
     expect(screen.queryByRole("status", { name: /demo mode/i })).not.toBeInTheDocument();
   });
 
-  it("shows the full nav and the demo banner with the on-prem disclaimer in demo mode", async () => {
+  it("shows the full nav without a demo warning banner in demo mode", async () => {
     vi.mocked(getConfig).mockResolvedValue({ ...BASE_CONFIG, deployment_mode: "demo", synthetic_data_only: true });
 
     renderApp();
 
-    await waitFor(() => expect(screen.getAllByText(/demo mode — synthetic data only/i).length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getByRole("link", { name: /^dashboard$/i })).toBeInTheDocument());
     expect(screen.getByRole("link", { name: /^dashboard$/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /^new review$/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /^architecture$/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /^playbook$/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /^admin$/i })).toBeInTheDocument();
-    expect(
-      screen.getByText(/not the target production architecture/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/production deployment target is fully on-premises/i)).toBeInTheDocument();
+    expect(screen.queryByText(/demo mode/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/synthetic data only/i)).not.toBeInTheDocument();
   });
 });
