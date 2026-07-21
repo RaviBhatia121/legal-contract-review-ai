@@ -586,10 +586,10 @@ Implemented per the approved plan and its 5 corrections. Full factual evidence l
   `PART2_PROVIDER_TYPE`/`PART2_OLLAMA_BASE_URL`/`PART2_QDRANT_URL` are set anywhere in the
   hosted config, so there is no model provider or vector store reachable from the hosted
   environment at all. No cloud model adapter was implemented.
-- **Admin config lock (correction #4):** `/admin/model` is hidden from the frontend nav when
-  `deployment_mode: demo` (`App.tsx`), **and** `PUT /config`
+- **Admin config lock (correction #4):** `/admin/model` remains visible in the frontend nav
+  for demo transparency, **but** `PUT /config`
   (`backend/app/api/routes_config.py`) unconditionally rejects with `CONFIGURATION_INVALID`
-  in demo mode regardless of payload — a backend lock, not reliance on UI hiding alone.
+  in demo mode regardless of payload — a backend lock, not reliance on UI hiding.
   Verified both via automated tests and a direct authenticated `curl PUT` against the built
   hosted image.
 - **Case-study narrative (correction #5):** the persistent, non-dismissible
@@ -619,8 +619,8 @@ Implemented per the approved plan and its 5 corrections. Full factual evidence l
   `SECURITY_EVIDENCE.md` §10.
 - **Tests:** 7 new backend tests (149 total: 6 `test_demo_access.py`, 1
   `test_update_config_rejected_unconditionally_in_demo_mode`); 2 new frontend tests (10
-  total: `demo-mode.test.tsx`, banner/on-prem-disclaimer shown and admin nav hidden in demo
-  mode, admin nav present and no banner in local mode). Full backend
+  total: `demo-mode.test.tsx`, banner/on-prem-disclaimer shown and full nav visible in demo
+  mode, no banner in local mode). Full backend
   (`python -m pytest -q`) and frontend (`npm run build`, `npm run test -- --run`) suites
   green.
 - **Deferred, not a P7 gap (explicit user decision on review):** the actual live Render
@@ -739,10 +739,10 @@ Implemented per the approved proposal, exactly matching all stated guardrails.
 - **`/` now renders `Dashboard`** instead of redirecting to `/review/new`
   (`App.tsx`'s `<Route path="/" element={<Navigate .../>} />` replaced with
   `<Route path="/" element={<Dashboard />} />`). `/review/new` is completely unchanged.
-- **`Dashboard` added as the first nav item** (`<NavLink to="/" end>`), and is **not**
-  conditionally hidden in demo mode — unlike `Admin`, it has no config/cloud implications;
-  demo-mode review history is already labeled synthetic-only by the existing persistent
-  `DemoModeBanner`. The `Admin` link's demo-mode hiding logic is byte-for-byte unchanged.
+- **`Dashboard` added as the first nav item** (`<NavLink to="/" end>`). The full nav
+  (`Dashboard`, `New review`, `Architecture`, `Playbook`, `Admin`) is visible in demo mode
+  so evaluators can inspect the complete product surface; backend locks still prevent
+  configuration writes in demo mode.
 - **Metrics are strictly real and honestly scoped, per the approved guardrails:**
   - "Reviews shown" is always phrased "N (up to 50 most recently retained)" — never "Total
     reviews" or "All reviews", since P6's retention policy actively deletes older rows and
@@ -770,8 +770,8 @@ Implemented per the approved proposal, exactly matching all stated guardrails.
 - **Tests:** 7 new tests in `frontend/tests/dashboard.test.tsx` — loading, API error,
   empty state, computed-stats-and-table-rendering with explicit negative assertions that no
   "Total reviews"/"All reviews"/"hours saved"/"money saved"/"risk(s) prevented"/"ROI" text
-  ever appears, Dashboard nav visible in both local and demo mode (with Admin still hidden
-  in demo mode), and root route `/` rendering Dashboard content instead of redirecting.
+  ever appears, full nav visible in both local and demo mode, and root route `/` rendering
+  Dashboard content instead of redirecting.
   Full frontend suite: **17 passed** (10 existing + 7 new, zero regressions).
 - **Verification:** `npm run test -- --run` 17/17 pass; `npm run build` clean; backend
   suite re-run unaffected (**158/158**, confirming zero backend touch as required). Live

@@ -255,7 +255,7 @@ runs the deploy, per `docs/DEMO_RUNBOOK.md`.
 
 Automated coverage: `backend/tests/test_demo_access.py` (6 tests),
 `backend/tests/test_health.py::test_update_config_rejected_unconditionally_in_demo_mode`,
-`frontend/tests/demo-mode.test.tsx` (2 tests — admin nav hidden and demo
+`frontend/tests/demo-mode.test.tsx` (2 tests — full nav visible and demo
 banner/on-prem disclaimer shown only in demo mode).
 
 **Persistence — explicit demo-only exception:** the default `render.yaml`

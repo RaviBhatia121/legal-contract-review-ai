@@ -60,8 +60,8 @@ glyph, was an unrelated default scaffold mark), deleted unused `frontend/public/
 added a navy/gold CSS-variable palette (risk/demo-warning colors untouched),
 `:focus-visible` styles, and header/footer/mobile-nav polish. P8.3 built the actual
 `Dashboard` page (`frontend/src/pages/Dashboard.tsx`) on top of the P8.1 endpoint: `/` now
-renders it instead of redirecting to `/review/new`; `Dashboard` is the first nav item and,
-unlike `Admin`, is **not** hidden in demo mode; metrics (reviews shown, completed/
+renders it instead of redirecting to `/review/new`; `Dashboard` is the first nav item and
+the full nav is visible in demo mode for evaluator transparency; metrics (reviews shown, completed/
 in-progress/failed, risk distribution, retrieval split) are computed live from
 `GET /api/v1/reviews?limit=50` and always labeled "up to 50 most recently retained" — never
 "Total"/"All reviews" — with no fake ROI/time-saved/money-saved/"risks prevented" claims and

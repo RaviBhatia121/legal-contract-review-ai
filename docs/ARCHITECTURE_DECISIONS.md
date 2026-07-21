@@ -157,7 +157,7 @@ output into the backend image, which serves it via a catch-all SPA-fallback
 route registered after the API routers. Access is gated by an app-level
 HTTP Basic Auth middleware active only when `deployment_mode: demo`
 (D-06), and `PUT /config` is backend-locked in that mode regardless of the
-frontend hiding the admin nav link. SQLite persistence on the hosted demo
+frontend nav visibility. SQLite persistence on the hosted demo
 is ephemeral on Render's free plan (no persistent disk on that tier) — an
 explicit, disclosed demo-only exception (see `docs/SECURITY_EVIDENCE.md`
 section 10).

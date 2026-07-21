@@ -128,7 +128,7 @@ describe("Dashboard nav visibility (P8.3)", () => {
     await waitFor(() => expect(screen.getByRole("link", { name: /^dashboard$/i })).toBeInTheDocument());
   });
 
-  it("shows the Dashboard nav link in demo mode too (unlike Admin)", async () => {
+  it("shows the full nav in demo mode too", async () => {
     vi.mocked(getConfig).mockResolvedValue({ ...BASE_CONFIG, deployment_mode: "demo", synthetic_data_only: true });
     vi.mocked(listReviews).mockResolvedValue({ items: [], limit: 50, offset: 0 } satisfies ReviewListOut);
     render(
@@ -137,7 +137,10 @@ describe("Dashboard nav visibility (P8.3)", () => {
       </MemoryRouter>,
     );
     await waitFor(() => expect(screen.getByRole("link", { name: /^dashboard$/i })).toBeInTheDocument());
-    expect(screen.queryByRole("link", { name: /admin/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^new review$/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^architecture$/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^playbook$/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^admin$/i })).toBeInTheDocument();
   });
 
   it("renders Dashboard content at the root route instead of redirecting", async () => {

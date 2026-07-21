@@ -215,8 +215,7 @@ Update allowed runtime configuration. Hosted mode requires admin authorization.
 **P7 implementation:** unconditionally rejected with `CONFIGURATION_INVALID`
 whenever `deployment_mode: demo`, regardless of payload — the hosted demo is
 deterministic-only and has nothing to configure (D-05 stays open). This is a
-backend lock, independent of the frontend hiding the `/admin/model` nav
-link in demo mode; a direct API client cannot bypass it. See
+backend lock, independent of frontend navigation visibility; a direct API client cannot bypass it. See
 `docs/SECURITY_EVIDENCE.md` section 10.
 
 Rules:

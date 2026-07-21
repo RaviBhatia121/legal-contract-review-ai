@@ -33,11 +33,8 @@ function App() {
           </NavLink>
           <NavLink to="/review/new">New review</NavLink>
           <NavLink to="/architecture">Architecture</NavLink>
-          {/* P7: hidden in hosted demo mode — there is nothing to configure
-              there (deterministic-only, D-05 stays open), and PUT /config
-              is backend-locked in demo mode regardless of this UI hiding. */}
-          {config?.deployment_mode !== "demo" && <NavLink to="/admin/playbook">Playbook</NavLink>}
-          {config?.deployment_mode !== "demo" && <NavLink to="/admin/model">Admin</NavLink>}
+          <NavLink to="/admin/playbook">Playbook</NavLink>
+          <NavLink to="/admin/model">Admin</NavLink>
         </nav>
       </header>
 

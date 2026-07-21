@@ -120,7 +120,7 @@ describe("Playbook nav visibility", () => {
     await waitFor(() => expect(screen.getByRole("link", { name: /^playbook$/i })).toBeInTheDocument());
   });
 
-  it("hides Playbook nav in hosted demo mode with Admin", async () => {
+  it("shows Playbook nav in hosted demo mode too", async () => {
     vi.mocked(getConfig).mockResolvedValue({ ...BASE_CONFIG, deployment_mode: "demo", synthetic_data_only: true });
     vi.mocked(listReviews).mockResolvedValue({ items: [], limit: 50, offset: 0 });
     render(
@@ -129,7 +129,6 @@ describe("Playbook nav visibility", () => {
       </MemoryRouter>,
     );
     await waitFor(() => expect(screen.getByRole("link", { name: /^dashboard$/i })).toBeInTheDocument());
-    expect(screen.queryByRole("link", { name: /^playbook$/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /^admin$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^playbook$/i })).toBeInTheDocument();
   });
 });

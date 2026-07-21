@@ -11,10 +11,10 @@ An intranet-style Legal Contract Risk Review portal. The interface is task-orien
 - `/admin/model`: runtime provider configuration
 - Global: product name, Demo mode badge when active, synthetic-data warning, architecture/about link
 
-**P7 hosted-demo presentation:** when `deployment_mode: demo`, the `Admin` and `Playbook`
-nav links (and `/admin/model`/`/admin/playbook` screen content) are hidden — the hosted demo is
-deterministic-only, so there is nothing to configure there, and `PUT
-/config` is separately backend-locked in demo mode regardless
+**P7 hosted-demo presentation:** when `deployment_mode: demo`, the full navigation remains
+visible (`Dashboard`, `New review`, `Architecture`, `Playbook`, `Admin`) so evaluators can
+inspect the complete product surface. The hosted demo is deterministic-only, and `PUT
+/config` is separately backend-locked in demo mode regardless of UI visibility
 (`docs/API_CONTRACT.md`). A persistent, non-dismissible banner
 (`DemoModeBanner`, `frontend/src/components/DemoModeBadge.tsx`) is shown
 below the header carrying two messages: (1) synthetic-data-only /
@@ -34,10 +34,8 @@ narrow viewports.
 
 **P8.3 Dashboard/Home:** `/` now renders `Dashboard` (`frontend/src/pages/
 Dashboard.tsx`) instead of redirecting to `/review/new`. `Dashboard` is the
-first nav item, followed by `New review`, conditional `Playbook`, and conditional `Admin`; unlike
-`Admin`, the `Dashboard` link is **not** hidden in demo mode (it has no
-config/cloud implications and demo-mode review history is already labeled
-synthetic-only by the persistent `DemoModeBanner`). The page fetches
+first nav item, followed by `New review`, `Architecture`, `Playbook`, and `Admin`;
+all nav items are visible in both local and demo modes. The page fetches
 `GET /api/v1/reviews?limit=50` once on mount (no auto-polling) and shows:
 - A stat row: **Reviews shown** (always phrased "N (up to 50 most recently
   retained)" — never "Total reviews" or "All reviews", since P6's retention
