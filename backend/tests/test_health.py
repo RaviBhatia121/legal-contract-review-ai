@@ -1,6 +1,6 @@
 import pytest
 
-from app.api import routes_health
+from app.api import routes_config, routes_health
 
 pytestmark = pytest.mark.asyncio
 
@@ -48,15 +48,21 @@ async def test_config(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["deployment_mode"] == "local"
+    assert body["provider_type"] == "ollama"
+    assert body["model_name"] == "qwen3.6:35b"
+    assert body["base_url_display"] == "configured, hidden"
+    assert "192.168.1.50" not in resp.text
     assert "has_credential" in body
     assert "credential" not in body
 
 
-async def test_config_test_reports_provider_unavailable_without_ollama(client):
-    # No Ollama reachable in the test environment: honest failure, not a faked success.
+async def test_config_test_reports_provider_unavailable_when_ollama_unreachable(client, monkeypatch):
+    # Honest failure, not a faked success, when the configured Ollama endpoint is unreachable.
+    monkeypatch.setitem(routes_config._runtime_override, "base_url_display", "http://127.0.0.1:9")
     resp = await client.post("/api/v1/config/test")
     assert resp.status_code == 503
     assert resp.json()["error"]["code"] == "PROVIDER_UNAVAILABLE"
+    monkeypatch.setitem(routes_config._runtime_override, "base_url_display", None)
 
 
 async def test_list_providers_shows_full_catalog_with_implemented_flags(client):
@@ -134,6 +140,16 @@ async def test_update_config_accepts_valid_ollama_base_url(client):
     )
     assert resp.status_code == 200
     assert resp.json()["base_url_display"] == "http://ollama:11434"
+
+
+async def test_config_masks_private_ip_base_url_after_update(client):
+    resp = await client.put(
+        "/api/v1/config",
+        json={"provider_type": "ollama", "base_url": "http://192.168.1.50:11434"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["base_url_display"] == "http://***.***.***.***:11434"
+    assert "192.168.1.50" not in resp.text
 
 
 async def test_update_config_rejects_javascript_scheme_base_url(client):

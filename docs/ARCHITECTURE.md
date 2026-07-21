@@ -19,9 +19,12 @@
     risk are already final; retrieval can only add a `guidance` list, never change them. If
     Qdrant or the embedding model is unreachable, this step degrades to
     `retrieval_mode: degraded_full_rules` and `guidance: []` without failing the review.
-12. SQLite stores the immutable result, provenance, and any retrieved guidance.
-13. The frontend polls the API and renders findings, evidence, recommended actions, and
-    supplemental guidance where available.
+12. **As of P9.2:** the API attaches approved-template draft clause language keyed by
+    `rule_id`. This is deterministic Legal drafting support, not free-form generation, and
+    cannot change risk decisions.
+13. SQLite stores the immutable result, provenance, and any retrieved guidance.
+14. The frontend polls the API and renders findings, evidence, recommended actions,
+    suggested draft language, and supplemental guidance where available.
 
 ## Component Boundaries
 
@@ -35,13 +38,15 @@
 | Model adapter | Normalize provider calls and structured responses | Decide application routing or persistence |
 | Rule engine | Apply playbook rules and aggregate risk | Depend on free-form chat output |
 | Qdrant (P4, in use) | Rank supplemental playbook guidance, queried post-processing after rule evaluation (`backend/app/services/guidance_retrieval.py`) | Exclude applicable rules, assign risk, or become the result source of truth — verified live: retrieval-on vs retrieval-off produce identical rule outcomes |
+| Drafting templates (P9.2) | Provide approved-template clause language for Legal review | Generate free-form contract language or bypass Legal approval |
 | SQLite result store | Persist review status, structured findings, and provenance | Store plaintext credentials or original uploads |
 
 ## Deployment Modes
 
 ### Hosted Demo
 - Publicly reachable URL with required authentication or access restriction.
-- Approved cloud model may be configured for speed.
+- Deterministic-only hosted demo image; no cloud model, Ollama, or Qdrant provider is configured
+  in the hosted runtime.
 - Synthetic contracts only.
 - Clearly labelled `Demo mode`.
 - Original uploads deleted after processing; review records expire after 24 hours.
@@ -63,11 +68,22 @@
 
 ## Scope Guardrails
 - No chatbot.
-- No contract drafting or redlining.
+- No free-form contract drafting, redlining, negotiation automation, or legal approval bypass.
 - No autonomous legal decision.
 - No production claim based solely on the hosted demo.
 - Cloud processing is a disclosed Demo-mode exception, not the production design.
 - Final requirement evidence includes a successful egress-blocked Docker Ollama/Qwen run; cloud execution cannot substitute for it.
+
+## In-App Walkthrough
+P9.1 adds `/architecture`, a reviewer-facing page that summarizes the local stack and secure
+data-flow walkthrough directly in the portal. It is visible in local and hosted Demo modes
+because it exposes no secrets or admin controls.
+
+The secure local data-flow view now makes the access boundary explicit: the portal is intended
+to be reached only from managed laptops on corporate office Wi-Fi or through an approved VPN
+into the on-premises network. Public internet access and unmanaged devices are shown as blocked
+paths. Qdrant is shown as an optional supplemental guidance branch; it does not alter final
+playbook risk decisions.
 
 ## Prototype Job Execution
 The proposed PoC baseline uses a bounded in-process background executor in a single backend instance. Active jobs that are interrupted by restart transition to `failed` during recovery. The enterprise target separates API and workers through a durable internal queue. This remains proposed decision D-12 until review.

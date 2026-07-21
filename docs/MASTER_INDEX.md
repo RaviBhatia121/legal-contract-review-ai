@@ -23,21 +23,23 @@ Use this file as the entry point for all Part 2 work.
 18. [DATA_MODEL.md](./DATA_MODEL.md) - entities, storage boundaries, and retention
 19. [OUTPUT_SCHEMA.md](./OUTPUT_SCHEMA.md) - backend/frontend result contract
 20. [API_CONTRACT.md](./API_CONTRACT.md) - backend endpoints, payloads, and typed errors
-21. [UI_SPEC.md](./UI_SPEC.md) - screens, states, and interaction model
-22. [DEMO_FIXTURE_SPEC.md](./DEMO_FIXTURE_SPEC.md) - synthetic contract and expected findings
-23. [TEST_AND_ACCEPTANCE_PLAN.md](./TEST_AND_ACCEPTANCE_PLAN.md) - validation and release evidence
-24. [TRACEABILITY_MATRIX.md](./TRACEABILITY_MATRIX.md) - requirements-to-specification mapping
-25. [RISK_REGISTER.md](./RISK_REGISTER.md) - delivery, security, model, and licensing risks
-26. [IMPLEMENTATION_PHASE_PLAN.md](./IMPLEMENTATION_PHASE_PLAN.md) - incremental implementation phases and phase-completion enforcement
-27. [IMPLEMENTATION_BACKLOG.md](./IMPLEMENTATION_BACKLOG.md) - sequenced build tasks and phase completion status
-28. [EXECUTION_PLAN_48H.md](./EXECUTION_PLAN_48H.md) - two-day sequence and scope cuts
-29. [DEMO_RUNBOOK.md](./DEMO_RUNBOOK.md) - repeatable presentation and fallback path
-30. [PRE_IMPLEMENTATION_SELF_REVIEW.md](./PRE_IMPLEMENTATION_SELF_REVIEW.md) - superseded earlier self-review
-31. [INDEPENDENT_AUDIT.md](./INDEPENDENT_AUDIT.md) - retained Claude review findings and conditional verdict
-32. [RE_AUDIT.md](./RE_AUDIT.md) - Claude post-correction audit and readiness verdict
-33. [RECONCILIATION_AUDIT.md](./RECONCILIATION_AUDIT.md) - current cross-document audit and correction resolutions
-34. [REVIEW_GATE.md](./REVIEW_GATE.md) - mandatory stakeholder checkpoint before implementation
-35. [CHANGE_CONTROL.md](./CHANGE_CONTROL.md) - enforcement for keeping docs updated
+21. [AI_MODEL_FALLBACK_APPENDIX.md](./AI_MODEL_FALLBACK_APPENDIX.md) - model-vs-rules fallback behavior and disclosure fields
+22. [UI_SPEC.md](./UI_SPEC.md) - screens, states, and interaction model
+23. [DEMO_FIXTURE_SPEC.md](./DEMO_FIXTURE_SPEC.md) - synthetic contract and expected findings
+24. [TEST_AND_ACCEPTANCE_PLAN.md](./TEST_AND_ACCEPTANCE_PLAN.md) - validation and release evidence
+25. [TRACEABILITY_MATRIX.md](./TRACEABILITY_MATRIX.md) - requirements-to-specification mapping
+26. [RISK_REGISTER.md](./RISK_REGISTER.md) - delivery, security, model, and licensing risks
+27. [IMPLEMENTATION_PHASE_PLAN.md](./IMPLEMENTATION_PHASE_PLAN.md) - incremental implementation phases and phase-completion enforcement
+28. [P8_UI_UX_POLISH_PLAN.md](./P8_UI_UX_POLISH_PLAN.md) - proposed incremental UI/UX and demo-polish plan
+29. [IMPLEMENTATION_BACKLOG.md](./IMPLEMENTATION_BACKLOG.md) - sequenced build tasks and phase completion status
+30. [EXECUTION_PLAN_48H.md](./EXECUTION_PLAN_48H.md) - two-day sequence and scope cuts
+31. [DEMO_RUNBOOK.md](./DEMO_RUNBOOK.md) - repeatable presentation and fallback path
+32. [PRE_IMPLEMENTATION_SELF_REVIEW.md](./PRE_IMPLEMENTATION_SELF_REVIEW.md) - superseded earlier self-review
+33. [INDEPENDENT_AUDIT.md](./INDEPENDENT_AUDIT.md) - retained Claude review findings and conditional verdict
+34. [RE_AUDIT.md](./RE_AUDIT.md) - Claude post-correction audit and readiness verdict
+35. [RECONCILIATION_AUDIT.md](./RECONCILIATION_AUDIT.md) - current cross-document audit and correction resolutions
+36. [REVIEW_GATE.md](./REVIEW_GATE.md) - mandatory stakeholder checkpoint before implementation
+37. [CHANGE_CONTROL.md](./CHANGE_CONTROL.md) - enforcement for keeping docs updated
 
 ## Current State
 - P0 Foundation and Fixed Result Demo, P1 Real Document Parsing, P2 Deterministic Playbook
@@ -67,8 +69,37 @@ Use this file as the entry point for all Part 2 work.
 - The full reconciliation and independent-review corrections are recorded in `RECONCILIATION_AUDIT.md`; the original independent report is retained in `INDEPENDENT_AUDIT.md`, and the post-correction audit is retained in `RE_AUDIT.md`.
 - Implementation may continue for local pipeline work; a real hosted model provider (D-05)
   remains a separate, not-yet-forced decision.
-- Phase status is tracked in `IMPLEMENTATION_PHASE_PLAN.md`; P0-P7 are `complete`. The live
-  public URL is tracked there as deferred work for a later phase, not as open P7 scope.
+- Phase status is tracked in `IMPLEMENTATION_PHASE_PLAN.md`; P0-P9 are `complete`. The live public URL is tracked there as deferred work for a later phase, not
+  as open P7 scope.
+- P8 UI/UX and demo polish is tracked in `P8_UI_UX_POLISH_PLAN.md`, status `complete` —
+  **P8.1 (Dashboard API, `GET /api/v1/reviews`), P8.2 (Brand and Shell: navy/gold palette,
+  new favicon, unused `icons.svg` deleted, `:focus-visible`, header/footer/mobile polish),
+  P8.3 (Dashboard/Home: `/` now renders real review-history metrics and a
+  recent-reviews table, `Dashboard` nav link added first and visible in both local and demo
+  mode, no fake ROI/value metrics), P8.4 (Upload Screen Polish: `/review/new` now has a
+  page-level playbook summary card, a 5-stage workflow strip, and a hosting-neutral trust
+  note that avoids "on-premises"/"on-prem"/"air-gapped" wording since the screen can run in
+  hosted Demo mode; upload mechanics unchanged), and P8.5 (Findings Screen Polish:
+  `/reviews/:reviewId` now shows a compliance banner, severity-grouped findings, a separate
+  missing-clauses section, and field-labeled evidence/reasoning/recommendation, with every
+  field, filter, and polling behavior preserved), and P8.6 (Admin Screen Polish:
+  `/admin/model` now shows runtime-provider posture cards, current-config summary, provider
+  catalog cards, security notes, and connection-test panel while keeping cloud providers
+  disabled placeholders and credentials write-only), P8.7 (Documentation and Final
+  Validation: docs reconciled, backend 158/158, frontend 28/28, frontend build clean, Docker
+  health passed, live upload-to-findings smoke test passed), and P8.8 (Admin Playbook
+  Viewer: `/admin/playbook` plus `GET /api/v1/playbooks/active`, read-only active playbook,
+  8 required clause families, severity coverage, missing-clause mappings, all 27 rules,
+  backend 163/163, frontend 33/33) are complete**.
+  P8 is a product/demo polish phase only: dashboard/history, branding, upload-screen
+  explanation, findings readability, admin visual polish, and read-only playbook visibility. It must not change rule logic,
+  model behavior, retrieval behavior, hosting status, or PDF/export packaging — P8.1, P8.2,
+  P8.3, P8.4, P8.5, P8.6, and P8.8 all confirmed no such change was needed or made.
+- **P9 Case-Study Alignment is complete:** `/architecture` exposes the required local tech
+  stack and secure data-flow walkthrough; findings now include deterministic
+  approved-template draft clause language with Legal-approval disclaimer; dashboard/review
+  screens explicitly show whether Qdrant supplemental guidance is active or unavailable.
+  P9 does not change risk rules, model behavior, or retrieval behavior.
 - **Schema-change reminder:** P4 added a new `Finding.guidance_json` column. There is no
   migration tooling in this prototype — a SQLite volume created before P4 needs
   `docker compose down -v` before the updated backend will run against it. P5, P6, and P7

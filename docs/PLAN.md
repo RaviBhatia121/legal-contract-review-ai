@@ -13,13 +13,13 @@ In scope:
 - Clause extraction
 - Risk classification
 - Playbook deviation detection
+- Approved-template drafting support for flagged legal risks
 - Structured output presentation
 - Hosted demo URL
 - Admin/configuration view to show enterprise flexibility
 
 Out of scope:
 - Chatbot-style interaction
-- Human-in-the-loop drafting features
 - HR or Procurement workflows
 - Anything beyond the Legal use case for Part 2
 
@@ -51,7 +51,7 @@ Out of scope:
 - [x] Structured result schema implementation: complete — real P2 findings now match `OUTPUT_SCHEMA.md`, not the P0 fixed result
 - [x] Results UI with annotations: complete (findings list, filters, missing-clause distinction)
 - [x] Admin/configuration screen: complete (P5 — editable form with provider select, model name, Ollama base URL, write-only credential, Save, and Test connection; only `ollama` saveable, others shown "Not enabled" and rejected server-side; `/config/test` real Ollama ping since P3)
-- [x] Model-assisted clause intelligence: complete (P3 — provider-neutral adapter, Docker Ollama adapter with `qwen3:4b`, lazy Haystack pipeline, schema-validated model output, real classification-based `DOCUMENT_NOT_APPLICABLE`); live Docker Ollama verification passed (4/4 runs identical), see `IMPLEMENTATION_PHASE_PLAN.md` P3 Live Verification Notes
+- [x] Model-assisted clause intelligence: complete (P3 — provider-neutral adapter, Ollama adapter, lazy Haystack pipeline, schema-validated model output, real classification-based `DOCUMENT_NOT_APPLICABLE`); current browser-demo runtime uses shared on-prem Ollama VM (`qwen3.6:35b`) with rules-only fallback; historical live Docker Ollama verification passed (4/4 runs identical), see `IMPLEMENTATION_PHASE_PLAN.md` P3 Live Verification Notes
 - [x] Supplemental retrieval and guidance: complete (P4 — Qdrant-backed guidance retrieval keyed by rule_id, real local embeddings via Docker Ollama `qllama/multilingual-e5-small`, 27-item authored guidance corpus, post-processing only — `rule_engine.py` untouched); live docker-compose diff confirmed retrieval-on/off produce identical rule outcomes, see `IMPLEMENTATION_PHASE_PLAN.md` P4 Completion Notes
 - [x] Provider portability admin UI: complete (P5 — no real hosted adapter; D-05 remains open), see `IMPLEMENTATION_PHASE_PLAN.md` P5 Completion Notes
 - [x] Security-conscious local deployment setup: complete (P6 — SSRF hardening, defense-in-depth upload size guard, log redaction, PoC retention enforcement, optional Qdrant API-key auth, CORS/egress evidence; factual record in `docs/SECURITY_EVIDENCE.md`)
@@ -63,9 +63,34 @@ Out of scope:
   Render deploy action and its downstream evidence (screenshots, filled-in runbook `TBD`
   fields) are deferred; see `docs/DEMO_RUNBOOK.md` and `IMPLEMENTATION_PHASE_PLAN.md` P7
   Completion Notes.
-- [ ] Validation against case study requirements: pending (P3/P4/P5/P6/P7 are all
-  live-verified against their own local/built-image evidence; full end-to-end validation
-  against a live public URL is part of the deferred later polish phase, not P7)
+- [x] Validation against case study requirements: complete except the deferred live public URL.
+  The local repository/prototype covers the Legal upload-to-structured-risk workflow,
+  local/open-source model path, Qdrant/vector role, Haystack orchestration, frontend portal,
+  secure data-flow walkthrough, and approved-template drafting support. The remaining
+  Render deploy action and live URL evidence are tracked in `DEMO_RUNBOOK.md`.
+- [x] P8 UI/UX and demo polish: complete — P8.1 Dashboard API complete (`GET /api/v1/reviews`,
+  retention-aware, summary-only, aggregate counts, 9 new tests, 158 backend tests total); P8.2
+  Brand and Shell complete (navy/gold palette, new favicon, unused `icons.svg` deleted,
+  `:focus-visible`, header/footer/mobile polish); P8.3 Dashboard/Home complete (`/` now
+  renders real review-history metrics and a recent-reviews table from
+  `GET /api/v1/reviews?limit=50`; `Dashboard` added as the first nav item, visible in both
+  local and demo mode; no fake ROI/value metrics; 7 new frontend tests, 17/17 total); P8.4
+  Upload Screen Polish complete (`/review/new` now has a playbook summary card, 5-stage
+  workflow strip, and a hosting-neutral trust note that avoids "on-premises"/"on-prem"/
+  "air-gapped" wording; upload mechanics unchanged; 5 new frontend tests, 22/22 total; 158/158
+  backend unaffected); P8.5 Findings Screen Polish complete (`/reviews/:reviewId` now shows a
+  compliance banner, severity-grouped findings, a separate missing-clauses section, and
+  field-labeled evidence/reasoning/recommendation, with all fields, filters, and polling
+  behavior preserved; 4 new frontend tests, 26/26 total; 158/158 backend unaffected); P8.6
+  Admin Screen Polish complete (`/admin/model` now has runtime-provider posture cards,
+  current-config summary, provider catalog cards, security notes, and connection-test panel;
+  cloud providers remain disabled placeholders, D-05 remains open, credentials remain
+  write-only; 28/28 frontend tests); P8.7 final validation complete (backend 158/158,
+  frontend 28/28, frontend build clean, Docker backend/frontend healthy, live fixture upload
+  completed with `overall_risk: Critical`, 7 findings, and 1 missing clause); P8.8 Admin
+  Playbook Viewer complete (`/admin/playbook` plus `GET /api/v1/playbooks/active`, read-only
+  active playbook/rule catalogue, no CRUD or risk-behavior change; backend 163/163, frontend
+  33/33, frontend build clean)
 
 ## Phase Status
 See `IMPLEMENTATION_PHASE_PLAN.md` for phase-level delivery contracts and end-of-phase documentation enforcement.
@@ -77,14 +102,21 @@ See `IMPLEMENTATION_PHASE_PLAN.md` for phase-level delivery contracts and end-of
 - P5 Admin and Provider Configuration: complete (provider portability via UI/catalog/interface only; no real cloud adapter, D-05 remains open)
 - P6 Security and Evidence Hardening: complete (SSRF/redaction/retention/Qdrant-auth/CORS/egress-blocked evidence; see `docs/SECURITY_EVIDENCE.md`)
 - P7 Hosted Demo and Polish: complete — the live public URL is deferred to a later polish/optimization phase by explicit decision, not treated as open P7 scope; see `docs/IMPLEMENTATION_PHASE_PLAN.md` P7 Completion Notes and `docs/DEMO_RUNBOOK.md`
+- P8 UI/UX and Demo Polish: complete — see `docs/P8_UI_UX_POLISH_PLAN.md` and `docs/IMPLEMENTATION_PHASE_PLAN.md` P8.1-P8.8 Completion Notes; hosting/live URL and PDF/export remain out of scope
+- P9 Case-Study Alignment: complete — `/architecture` explains the local stack and secure
+  data flow; findings include approved-template draft clause language; dashboard/review
+  screens explicitly show Qdrant supplemental-guidance status; no risk-decision behavior
+  changed; backend 164/164, frontend 38/38, frontend build clean, Docker rebuild and live
+  upload smoke test passed
 
 ## Working Definition
 The prototype should:
 1. Accept a legal document upload.
 2. Process the document through a deterministic pipeline.
 3. Return a structured list of clauses, risks, and deviations.
-4. Display the output in a clear intranet-style portal.
-5. Demonstrate that the system can be configured for enterprise deployment.
+4. Provide approved-template drafting support for flagged risks, with legal approval required.
+5. Display the output in a clear intranet-style portal.
+6. Demonstrate the local stack, secure data flow, model path, and vector database role.
 
 ## Update Rule
 This file should be updated as implementation progresses.

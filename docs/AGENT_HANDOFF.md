@@ -13,21 +13,102 @@ a bare `backend/`, `frontend/`, or `*.md` path at "Part2/", read it as relative 
 `legal-contract-review-ai/` instead.
 
 ## Current Phase
-P0-P7 are complete, including a live Docker Ollama + `qwen3:4b` golden-fixture verification
-(P3, 4/4 runs identical, one egress-blocked), a live Qdrant-backed retrieval verification
+P0-P9 are complete. Historical P3 evidence includes a live Docker Ollama + `qwen3:4b`
+golden-fixture verification (4/4 runs identical, one egress-blocked); the current browser
+demo runtime uses the shared on-prem Ollama VM (`http://<ollama-vm-ip>:11434`,
+`qwen3.6:35b`) with rules-only fallback. Other evidence includes a live Qdrant-backed retrieval verification
 (P4, retrieval-on vs retrieval-off produced identical rule outcomes), a live admin-config
 save/reject/test-connection verification (P5, real browser + curl checks against the running
 Docker stack), live security-control verification including a distinct egress-blocked
 default-mode run (P6), and hosted-demo packaging verified against the built hosted image run
 locally (P7 — demo Basic Auth, backend-locked config, same-origin serving; see
-`docs/SECURITY_EVIDENCE.md` section 10). See `IMPLEMENTATION_PHASE_PLAN.md` P3-P7 notes.
+`docs/SECURITY_EVIDENCE.md` section 10), plus P8 UI/UX polish and final validation
+(backend 158/158, frontend 28/28, frontend build clean, Docker health passed, live
+upload-to-findings smoke test passed). See `IMPLEMENTATION_PHASE_PLAN.md` P3-P9 notes.
+
+**P9 status note:** Case-study alignment is complete. `/architecture` now gives the
+reviewer-facing local tech stack and secure data-flow walkthrough; findings include
+`Suggested approved clause language` from deterministic approved templates keyed by
+`rule_id`; dashboard and review-result screens explicitly show Qdrant supplemental-guidance
+status. This closes the Legal automated-drafting support and local-stack walkthrough gaps
+without changing risk decisions, model behavior, or retrieval behavior. Final validation:
+backend 164/164, frontend 38/38, frontend build clean, Docker rebuild healthy, and live
+fixture upload completed with model mode, no fallback, Critical risk, and approved-template
+draft support on all finding/missing-clause items.
 
 **P7 status note:** the actual live public Render URL is **deferred to a later
-polish/optimization phase, not a P7 blocker.** All hosted-demo packaging and its local
+polish/optimization phase, not a P7/P8 blocker.** All hosted-demo packaging and its local
 verification are complete and accepted as-is (`backend/Dockerfile.hosted`, `render.yaml`,
-Basic Auth, demo banner, demo-mode config lock, same-origin serving). Do not move to P8 (or
-any further work) without explicit direction. D-05 (hosted model provider) remains
+Basic Auth, demo banner, demo-mode config lock, same-origin serving). D-05 (hosted model provider) remains
 deliberately open — the hosted demo is deterministic-only by design.
+
+**AI fallback transparency note:** if model mode is requested but the local Ollama/model path
+is unavailable, the review completes via deterministic playbook fallback and discloses that
+state in API provenance (`mode_requested`, `mode_used`, `fallback_used`, `fallback_reason`)
+plus the findings screen/dashboard UI. See `AI_MODEL_FALLBACK_APPENDIX.md`.
+
+**P8 status note:** UI/UX and demo polish is tracked in `docs/P8_UI_UX_POLISH_PLAN.md`,
+status `complete` — **P8.1 (Dashboard API), P8.2 (Brand and Shell), P8.3
+(Dashboard/Home), P8.4 (Upload Screen Polish), P8.5 (Findings Screen Polish), and P8.6
+(Admin Screen Polish), P8.7 (Documentation and Final Validation), and P8.8 (Admin Playbook
+Viewer) are complete**. P8.1 added
+`GET /api/v1/reviews` (summary-only, retention-aware, one aggregate query per call) per the
+approved proposal and Codex's 2 corrections (DTO/tuple return from
+`ReviewRepository.list_summaries()` instead of bare `list[Review]`; `GET ""` declared before
+`GET "/{review_id}"` in `routes_reviews.py`). P8.2 replaced the favicon (document/checkmark
+glyph, was an unrelated default scaffold mark), deleted unused `frontend/public/icons.svg`,
+added a navy/gold CSS-variable palette (risk/demo-warning colors untouched),
+`:focus-visible` styles, and header/footer/mobile-nav polish. P8.3 built the actual
+`Dashboard` page (`frontend/src/pages/Dashboard.tsx`) on top of the P8.1 endpoint: `/` now
+renders it instead of redirecting to `/review/new`; `Dashboard` is the first nav item and,
+unlike `Admin`, is **not** hidden in demo mode; metrics (reviews shown, completed/
+in-progress/failed, risk distribution, retrieval split) are computed live from
+`GET /api/v1/reviews?limit=50` and always labeled "up to 50 most recently retained" — never
+"Total"/"All reviews" — with no fake ROI/time-saved/money-saved/"risks prevented" claims and
+no summed "findings caught" headline stat (deliberately excluded to avoid implied-value
+framing). P8.4 restyled `/review/new` (`ReviewNew.tsx`): a page-level "Active playbook"
+summary card (id, version, 27 rules, the 8 required clause families, and a "Produces:"
+output-shape list), a 5-stage `workflow-strip` (shared CSS class with the Dashboard's
+workflow list), and a hosting-neutral trust note ("Processed on this server and never sent
+to a public AI service") that deliberately avoids "on-premises"/"on-prem"/"air-gapped"
+wording since the same screen can run in hosted Demo mode. The inline `.playbook-info` line
+and the now-unused `playbookId` prop were removed from `UploadForm.tsx`; upload mechanics
+(drag/drop, validation, error handling, submit) are unchanged. No demo-mode acknowledgement
+checkbox was added — the existing global demo banner already covers that disclosure, and
+adding new gating logic was explicitly declined as out of scope. P8.5 restyled
+`/reviews/:reviewId`'s completed-review view: a `Review result` page heading and a
+compliance banner ("Findings are decision support only, not legal advice. Final risk
+labels are assigned by the deterministic playbook rule engine. Supplemental guidance,
+when shown, is illustrative context only and does not change any finding's risk label.");
+`SummaryPanel`'s severity counts grouped under "Findings by severity" with missing-clauses/
+needs-review set apart as a callout; `FindingsList` renders its existing filtered set
+(filters/logic unchanged) grouped under severity subheadings with missing clauses broken
+into their own section; `FindingCard` adds Evidence/Why this is flagged/Recommended action
+field labels (text unchanged) and a visually distinct guidance-panel container (copy
+unchanged, still the exact P4 disclaimer). No polling, API call, route, schema, rule ID,
+evidence/recommendation text, or guidance semantics changed. No backend/rule/model/
+retrieval/schema changes in any of the first five subphases. P8.6 restyled `/admin/model`
+into a clearer `Runtime Provider Configuration` screen: posture cards, current-config
+summary, provider catalog cards/pills, runtime settings, security notes, and connection-test
+panel. Existing config API calls and save/test behavior are unchanged. Ollama remains the
+only enabled/saveable provider; Anthropic/OpenAI/Gemini remain disabled placeholders; D-05
+is still open; credentials remain write-only and never displayed; connection test is
+labelled as reachability-only; demo-mode copy states production configuration changes remain
+server-side locked. P8.7 reconciled the docs and reran final validation: 158/158 backend
+tests pass; 28/28 frontend tests pass (10 + 7 + 5 + 4 + 2 net new); frontend production
+build passes; Docker backend/frontend are healthy on 8420/5420; backend readiness returns
+`status: ok`; frontend returns HTTP 200; live upload of `fixtures/sentinel-support-agreement.pdf`
+completed with `overall_risk: Critical`, 7 findings, and 1 missing clause. Visually verified
+in the browser preview against
+the running Docker stack (light/dark, desktop/mobile, no horizontal overflow at 375px),
+including a real completed review's findings screen and confirming the recent-reviews
+table's View links correctly route there. Full detail:
+`IMPLEMENTATION_PHASE_PLAN.md` P8.1-P8.8 Completion Notes. P8.8 added
+`GET /api/v1/playbooks/active` and `/admin/playbook`, a read-only active-playbook viewer
+with overview metrics, severity coverage, required clause-family cards, missing-clause rule
+mappings, and all 27 rules. CRUD is intentionally absent because playbook edits require
+versioning, validation, audit trail, rollback, and explicit approval. Validation after P8.8:
+backend 163/163, frontend 33/33, frontend build clean.
 
 ## Locked Decisions
 - Build a thin purpose-built Legal review application.
@@ -40,15 +121,13 @@ deliberately open — the hosted demo is deterministic-only by design.
 - Keep the design Unicode-safe and Indonesian-ready while using the English golden fixture for MVP acceptance.
 
 ## Next Recommended Task
-P7 is complete and accepted. Do not start further work without explicit user direction. The
-live public Render URL — actually running `render.yaml`/`backend/Dockerfile.hosted` against a
-real Render account and capturing the resulting live-URL evidence in
-`docs/DEMO_RUNBOOK.md` — is intentionally **deferred to a later polish/optimization phase**,
-not treated as unfinished P7 work. When that phase is authorized, it is also where the
-security controls explicitly deferred by P6 (rate limiting, full SSRF/egress allowlisting,
-SBOM/vulnerability scanning — see `docs/SECURITY_EVIDENCE.md`'s "What P6 does NOT cover")
-would need revisiting for a real public deployment; P7 already closed the TLS and
-access-restriction gaps for the hosted path specifically.
+P8.1-P8.8 and P9 are complete. Next recommended task is user browser review of the polished Part 2
+prototype, then decide whether to commit the P8 changes, move to final case-study packaging,
+or handle the explicitly deferred live public URL/PDF-export work.
+The live public Render URL — actually running
+`render.yaml`/`backend/Dockerfile.hosted` against a real Render account and capturing the
+resulting live-URL evidence in `docs/DEMO_RUNBOOK.md` — remains intentionally **deferred to
+a later polish/optimization phase**, not treated as unfinished P7/P8 work.
 
 A real hosted model adapter (Anthropic/OpenAI/Gemini) remains out of scope until D-05 is
 explicitly accepted with a named provider — P5 deliberately implemented provider portability
@@ -71,9 +150,9 @@ string makes Qdrant start enforcing auth — the opposite of "unset." `docker-co
 deliberately omits that env var by default; enabling real Qdrant auth requires a
 `docker-compose.override.yml` (see `.env.example` and `docs/SECURITY_EVIDENCE.md` section 5).
 
-Use `IMPLEMENTATION_PHASE_PLAN.md` as the phase contract. P0-P7 are `complete`. The live
+Use `IMPLEMENTATION_PHASE_PLAN.md` as the phase contract. P0-P9 are `complete`. The live
 public Render URL is tracked there as deferred to a later polish/optimization phase, not as
-an open P7 item.
+an open P7/P8 item.
 
 ## Handoff Update Rule
 At the end of every implementation session, update:
@@ -156,7 +235,8 @@ At the end of every implementation session, update:
   (`model_provider: rule-engine`); other locally running Docker projects unaffected.
 - P3 implemented per the approved plan and its 3 corrections: (1) default
   `clause_intelligence_mode` is `deterministic` everywhere, including `docker-compose.yml`
-  (model mode requires both an env var and the `local-model` compose profile); (2) the
+  (after the P8 follow-up, Ollama starts with the default stack for Admin test reliability,
+  but model mode still requires `CLAUSE_INTELLIGENCE_MODE=model`); (2) the
   Haystack `AsyncPipeline` is built lazily inside `ClauseIntelligenceService`, never at
   import time, so app startup never depends on Ollama; (3) `/config/test` does a real
   backend-only Ollama ping, no admin UI save/edit work (still P5). Added
@@ -235,8 +315,8 @@ At the end of every implementation session, update:
   retrieval is wired entirely as post-processing enrichment in `job_runner.py`, after
   `evaluate_clauses` has already produced final findings; a new `_attach_guidance` helper
   only ever sets `Finding.guidance_json`. Added the `qdrant` service to `docker-compose.yml`
-  behind a new opt-in `retrieval` Compose profile (the `ollama` service now belongs to both
-  the `local-model` and `retrieval` profiles, since P4 reuses it for embeddings); no host
+  behind a new opt-in `retrieval` Compose profile (after the P8 follow-up, `ollama` starts
+  with the default stack and P4 reuses it for embeddings when retrieval is enabled); no host
   port is published for Qdrant, tighter than Ollama's setup, per `SECURITY_AND_DATA.md`. 101
   backend pytest cases pass (17 new, including a before/after risk-field snapshot test
   proving retrieval cannot alter `rule_id`/`risk_label`/etc. by construction) and 2 frontend
@@ -338,11 +418,15 @@ At the end of every implementation session, update:
   `docker compose up -d --build`, because `backend`/`frontend` had no restart policy.
   Added a top-level `name: legal-contract-review-ai` to `docker-compose.yml` (already the
   effective project name via the folder, now explicit and independent of any future
-  directory rename) and `restart: unless-stopped` to `backend`/`frontend` only. `ollama` and
-  `qdrant` deliberately keep no restart policy — they stay opt-in-only via their existing
-  Compose profiles, so enabling either once doesn't cause a multi-GB model container to
-  silently reappear on every reboot. Ports, other Docker projects (`ai-boardroom-*`,
-  `omniflow-*`), and all other config are unaffected — see validation below.
+  directory rename) and `restart: unless-stopped` to `backend`/`frontend`.
+- Shared Ollama VM switch (P8 follow-up, current operating state): local Docker Compose now
+  defaults review processing to model-assisted mode against the shared on-prem Ollama VM
+  (`http://<ollama-vm-ip>:11434`, `qwen3.6:35b`). The laptop-local `ollama` service is
+  profile-gated (`--profile local-model`) and does not start by default. Rules-only remains
+  the disclosed fallback if the VM/model path is unavailable; the UI shows only two modes
+  (`AI-assisted`, `Rules only`) while API provenance retains `fallback_reason`. `qdrant`
+  remains opt-in-only via the `retrieval` profile. Ports and other Docker projects
+  (`ai-boardroom-*`, `omniflow-*`) are unaffected.
 
 ## Open Decisions
 See `OPEN_DECISIONS.md`. D-07 is accepted (Render, Docker Web Service packaging; the live

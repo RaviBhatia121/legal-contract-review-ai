@@ -15,8 +15,8 @@ Source PDF retained outside repo at workspace root (`CASE STUDY - Head of Enterp
 
 ## Selected Interpretation
 - Department: Legal.
-- Workflow: contract upload -> clause extraction -> clause classification -> playbook comparison -> risk scoring -> structured findings.
-- Primary output: annotated findings and missing-clause list.
+- Workflow: contract upload -> clause extraction -> clause classification -> playbook comparison -> risk scoring -> structured findings -> approved-template drafting support.
+- Primary output: annotated findings, missing-clause list, recommended actions, and suggested approved clause language for Legal review.
 - Target deployment: fully on-premises and capable of operating without external APIs.
 
 ## Prototype-Specific Additions
@@ -30,7 +30,7 @@ These choices support the demonstration but are not explicit case-study requirem
 A hosted demo that processes documents only through a proprietary cloud model does not prove the requirement to utilize an open-source model capable of running locally. The hosted demo may use a cloud provider only as a disclosed convenience and only with synthetic data. Final prototype acceptance additionally requires at least one successful run of the same golden fixture through the pinned Docker Ollama/Qwen local path with runtime egress blocked; the evidence must record configuration, result, and observed variance.
 
 ## Scope Exclusions
-- Contract drafting, despite being mentioned in the broader Part 1 Legal scope.
+- Free-form contract generation, redlining, negotiation automation, or unsupervised legal drafting.
 - Chat, question answering, redlining, negotiation, and electronic signature.
 - HR and Procurement workflows.
 - Production certification or handling of real defense information.

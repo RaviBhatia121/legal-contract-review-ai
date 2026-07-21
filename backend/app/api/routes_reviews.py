@@ -1,55 +1,47 @@
 import json
-from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Form, Response, UploadFile
+from fastapi import APIRouter, Depends, Form, Query, Response, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.errors import review_expired, review_not_found
-from app.core.config import Settings, get_settings
+from app.core.config import get_settings
 from app.core.job_runner import schedule_review_job
 from app.db.models import Finding, Review
 from app.db.repository import ReviewRepository
 from app.db.session import get_session
 from app.schemas.review import (
     DocumentInfo,
+    DraftClauseOut,
     ErrorOut,
     FindingOut,
     FindingsByRisk,
     GuidanceItemOut,
     Provenance,
     ReviewCreated,
+    ReviewListOut,
     ReviewOut,
     ReviewSummary,
+    ReviewSummaryItem,
 )
+from app.services.drafting import draft_clause_for_rule
+from app.services.retention import is_expired
 from app.services.upload import delete_temp_upload, sha256_hex, validate_and_read_upload, write_temp_upload
 
 router = APIRouter(prefix="/api/v1/reviews", tags=["reviews"])
 
-_TERMINAL_STATUSES = ("completed", "failed")
-
-
-def _retention_hours_for(review: Review, settings: Settings) -> float:
-    return settings.retention_hours_demo if review.deployment_mode == "demo" else settings.retention_hours_local
-
-
-def _is_expired(review: Review, settings: Settings) -> bool:
-    """PoC-only retention check (see SECURITY_AND_DATA.md) — only applies to
-    terminal reviews with a completed_at timestamp; an in-progress review is
-    never expired regardless of how old its `created_at` is."""
-    if review.status not in _TERMINAL_STATUSES or review.completed_at is None:
-        return False
-    # SQLite drops tzinfo on round-trip even though the column is declared
-    # DateTime(timezone=True); values are always written as UTC (see
-    # db/models.py's _now()), so a naive read-back is safely treated as UTC.
-    completed_at = review.completed_at
-    if completed_at.tzinfo is None:
-        completed_at = completed_at.replace(tzinfo=timezone.utc)
-    age_hours = (datetime.now(timezone.utc) - completed_at).total_seconds() / 3600
-    return age_hours > _retention_hours_for(review, settings)
-
 
 def _finding_to_out(finding: Finding) -> FindingOut:
     guidance = [GuidanceItemOut(**item) for item in json.loads(finding.guidance_json or "[]")]
+    draft_clause = draft_clause_for_rule(finding.rule_id)
+    draft_clause_out = (
+        DraftClauseOut(
+            text=draft_clause.text,
+            source=draft_clause.source,
+            approval_note=draft_clause.approval_note,
+        )
+        if draft_clause
+        else None
+    )
     return FindingOut(
         finding_id=finding.id,
         finding_type=finding.finding_type,  # type: ignore[arg-type]
@@ -68,6 +60,7 @@ def _finding_to_out(finding: Finding) -> FindingOut:
         needs_review=finding.needs_review,
         source=finding.source,  # type: ignore[arg-type]
         guidance=guidance,
+        suggested_draft_clause=draft_clause_out,
     )
 
 
@@ -130,6 +123,10 @@ def _build_review_out(review: Review) -> ReviewOut:
             model_provider=review.model_provider or "rule-engine",
             model_name=review.model_name or "none",
             model_revision=review.model_revision,
+            mode_requested=review.mode_requested,  # type: ignore[arg-type]
+            mode_used=review.mode_used,  # type: ignore[arg-type]
+            fallback_used=bool(review.fallback_used),
+            fallback_reason=review.fallback_reason,
             retrieval_mode=review.retrieval_mode,  # type: ignore[arg-type]
             completed_at=review.completed_at.isoformat() if review.completed_at else "",
         ),
@@ -170,6 +167,40 @@ async def create_review(
     )
 
 
+@router.get("", response_model=ReviewListOut)
+async def list_reviews(
+    limit: int = Query(default=20, ge=1, le=50),
+    offset: int = Query(default=0, ge=0),
+    session: AsyncSession = Depends(get_session),
+) -> ReviewListOut:
+    """Summary-only review history for the dashboard (P8.1). Never returns
+    evidence text, full findings, parsed text, or model/credential internals.
+    Expired terminal reviews encountered on this page are deleted, same as
+    GET /{review_id} — so a returned page may contain fewer than `limit`
+    items when expired rows were purged; this is expected, not a bug."""
+    repo = ReviewRepository(session)
+    rows = await repo.list_summaries(limit=limit, offset=offset, settings=get_settings())
+    items = [
+        ReviewSummaryItem(
+            review_id=review.id,
+            document_name=review.document_name,
+            status=review.status,  # type: ignore[arg-type]
+            overall_risk=review.overall_risk,  # type: ignore[arg-type]
+            created_at=review.created_at.isoformat() if review.created_at else "",
+            completed_at=review.completed_at.isoformat() if review.completed_at else None,
+            findings_total=findings_total,
+            missing_clause_count=missing_clause_count,
+            needs_review_count=needs_review_count,
+            deployment_mode=review.deployment_mode,  # type: ignore[arg-type]
+            retrieval_mode=review.retrieval_mode,  # type: ignore[arg-type]
+            mode_used=review.mode_used,  # type: ignore[arg-type]
+            fallback_used=bool(review.fallback_used),
+        )
+        for review, findings_total, missing_clause_count, needs_review_count in rows
+    ]
+    return ReviewListOut(items=items, limit=limit, offset=offset)
+
+
 @router.get("/{review_id}", response_model=ReviewOut)
 async def get_review(review_id: str, session: AsyncSession = Depends(get_session)) -> ReviewOut:
     repo = ReviewRepository(session)
@@ -177,7 +208,7 @@ async def get_review(review_id: str, session: AsyncSession = Depends(get_session
     if review is None:
         raise review_not_found()
 
-    if _is_expired(review, get_settings()):
+    if is_expired(review, get_settings()):
         await repo.delete(review)
         raise review_expired()
 

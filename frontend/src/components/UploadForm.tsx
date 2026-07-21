@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 
 interface Props {
-  playbookId: string;
   onSubmit: (file: File) => void;
   submitting: boolean;
   errorMessage: string | null;
@@ -11,7 +10,7 @@ interface Props {
 const ALLOWED_EXTENSIONS = [".pdf", ".docx"];
 const MAX_BYTES = 15 * 1024 * 1024;
 
-export function UploadForm({ playbookId, onSubmit, submitting, errorMessage }: Props) {
+export function UploadForm({ onSubmit, submitting, errorMessage }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -77,10 +76,6 @@ export function UploadForm({ playbookId, onSubmit, submitting, errorMessage }: P
           Selected: {file.name} ({Math.ceil(file.size / 1024)} KB)
         </p>
       )}
-
-      <div className="playbook-info">
-        <span>Playbook:</span> <strong>{playbookId}</strong> <span className="version">v1.0-draft</span>
-      </div>
 
       {(localError || errorMessage) && (
         <p className="form-error" role="alert">

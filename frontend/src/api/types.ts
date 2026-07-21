@@ -4,6 +4,7 @@ export type RiskLabel = "Low" | "Medium" | "High" | "Critical";
 export type Source = "rule" | "model_assisted_rule";
 export type DeploymentMode = "local" | "demo";
 export type RetrievalMode = "qdrant" | "degraded_full_rules";
+export type ReviewMode = "deterministic" | "model";
 export type GuidanceCategory = "negotiation_tip" | "approved_example" | "playbook_reference";
 
 export interface DocumentInfo {
@@ -37,6 +38,12 @@ export interface GuidanceItem {
   score: number | null;
 }
 
+export interface DraftClause {
+  text: string;
+  source: "approved_template";
+  approval_note: string;
+}
+
 export interface Finding {
   finding_id: string;
   finding_type: FindingType;
@@ -56,6 +63,8 @@ export interface Finding {
   source: Source;
   // P4: supplemental only — never influences rule_id/risk_label/severity above.
   guidance: GuidanceItem[];
+  // P9.2: approved-template drafting support only; legal approval remains required.
+  suggested_draft_clause: DraftClause | null;
 }
 
 export interface Provenance {
@@ -69,6 +78,10 @@ export interface Provenance {
   model_provider: string;
   model_name: string;
   model_revision: string | null;
+  mode_requested: ReviewMode;
+  mode_used: ReviewMode;
+  fallback_used: boolean;
+  fallback_reason: string | null;
   retrieval_mode: RetrievalMode;
   completed_at: string;
 }
@@ -101,6 +114,29 @@ export interface ReviewCreated {
   status_url: string;
 }
 
+// P8.3 dashboard/history — summary-only, mirrors backend ReviewSummaryItem.
+export interface ReviewSummaryItem {
+  review_id: string;
+  document_name: string;
+  status: ReviewStatus;
+  overall_risk: RiskLabel | null;
+  created_at: string;
+  completed_at: string | null;
+  findings_total: number;
+  missing_clause_count: number;
+  needs_review_count: number;
+  deployment_mode: DeploymentMode;
+  retrieval_mode: RetrievalMode;
+  mode_used: ReviewMode;
+  fallback_used: boolean;
+}
+
+export interface ReviewListOut {
+  items: ReviewSummaryItem[];
+  limit: number;
+  offset: number;
+}
+
 export interface RuntimeConfig {
   deployment_mode: DeploymentMode;
   provider_type: string;
@@ -128,4 +164,33 @@ export interface ConfigTestResult {
 export interface ProviderInfo {
   provider_type: string;
   implemented: boolean;
+}
+
+export interface PlaybookRule {
+  rule_id: string;
+  area: string;
+  clause_type: string;
+  trigger: string;
+  severity: RiskLabel;
+  recommended_action: string;
+  missing_clause_rule: boolean;
+}
+
+export interface PlaybookClauseFamily {
+  clause_type: string;
+  required: boolean;
+  missing_clause_rule_id: string | null;
+  rule_count: number;
+}
+
+export interface Playbook {
+  playbook_id: string;
+  playbook_version: string;
+  editable: boolean;
+  edit_policy: string;
+  clause_types: string[];
+  required_clause_types: string[];
+  missing_clause_rule_by_type: Record<string, string>;
+  clause_families: PlaybookClauseFamily[];
+  rules: PlaybookRule[];
 }

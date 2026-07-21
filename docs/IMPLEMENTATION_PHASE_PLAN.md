@@ -30,16 +30,27 @@ At the end of every phase:
 | P5 Admin and Provider Configuration | complete | Editable admin config API/UI, redacted secrets, provider catalog (`GET /config/providers`), Ollama endpoint settings with reject-not-ignore validation; no hosted-provider adapter (D-05 remains open) | Admin can demonstrate provider portability and Demo mode without exposing credentials | Config never returns secrets (verified); only `ollama` selectable/saveable, others shown "Not enabled" and rejected server-side if submitted (verified live); `base_url` rejected for non-ollama or invalid format (verified live); docs updated |
 | P6 Security and Evidence Hardening | complete | SSRF hardening (mode-gated blocklist), defense-in-depth upload size guard, log redaction, PoC retention enforcement, optional Qdrant API-key auth, CORS/egress evidence, `docs/SECURITY_EVIDENCE.md` | Prototype has credible defense-sector security evidence and local-model verification | Security tests pass (verified, 26 new backend tests); local egress-blocked default-mode fixture run captured (**verified live**, byte-identical to normal-networking baseline); three-run local-model variance already recorded in P3 (cross-referenced, not redone); docs updated |
 | P7 Hosted Demo and Polish | complete | Deployment packaging (`backend/Dockerfile.hosted`, `render.yaml`), D-07 accepted as Render, hosted-demo Basic Auth access gate, backend-locked config in demo mode, same-origin frontend/backend serving, demo banner + case-study narrative disclaimer | Deployable hosted-demo image presents a polished synthetic demo workflow and case-study narrative | Hosted image built and verified locally against every check a live deploy would need (see `SECURITY_EVIDENCE.md` §10); D-07 accepted (Render, packaging), D-05 deliberately stays open (deterministic-only hosted demo); docs updated. **Explicitly deferred to a later polish/optimization phase, by decision, not a P7 exit-criteria gap:** actually running the committed `render.yaml`/`backend/Dockerfile.hosted` against a live Render account to obtain a public URL — `docs/DEMO_RUNBOOK.md`'s hosted URL and generated-fixture-artifact fields stay `TBD` until that later phase. |
+| P8 UI/UX and Demo Polish | complete | Dashboard/history API and UI, product branding, upload-screen playbook/local-processing explanation, findings readability, admin visual polish, read-only playbook viewer, final validation | Prototype feels like a credible intranet legal AI product while preserving the structured non-chat workflow | `GET /reviews` summary list works without leaking evidence/full findings and respects retention (**done, P8.1**); dashboard metrics are real (**done, P8.3**); branding/default scaffold feel removed (**done, P8.2**); upload screen explains the playbook/pipeline/output honestly without on-premises claims (**done, P8.4**); findings screen is scannable, discloses decision-support/rule-engine-sourced risk/non-scoring guidance, and preserves every field (**done, P8.5**); admin screen demonstrates provider portability without enabling cloud adapters or exposing credentials (**done, P8.6**); read-only Admin Playbook viewer exposes active playbook/rules without CRUD (**done, P8.8**); no rule/model/retrieval behavior changes; backend tests 163/163, frontend tests 33/33, frontend build, Docker health, live upload smoke test, and docs reconciliation passed |
+| P9 Case-Study Alignment | complete | `/architecture` stack/data-flow page, approved-template drafting support keyed by rule ID, explicit Qdrant guidance status cards | Reviewer can see the required local tech stack/model/vector DB/backend/frontend walkthrough, Legal drafting support, and retrieval status without ambiguity | Backend 164/164 passed; frontend 38/38 passed; frontend build clean; Docker rebuilt; live upload completed with model mode, no fallback, Critical risk, and approved-template draft support on every finding/missing-clause item |
 
 ## Dependency Notes
-- P0-P7 are complete and verified, including a live Docker Ollama + `qwen3:4b` golden-fixture
-  run (P3), a live Qdrant + local-embedding retrieval run (P4), a live admin config
+- P0-P9 are complete and verified. Historical P3 evidence includes a live Docker Ollama +
+  `qwen3:4b` golden-fixture run; the current browser-demo runtime uses the shared on-prem
+  Ollama VM (`http://<ollama-vm-ip>:11434`, `qwen3.6:35b`) so the laptop does not run a
+  heavy local model. Verification also includes a live Qdrant + local-embedding retrieval run (P4), a live admin config
   save/reject/test-connection verification (P5), live security-control verification
   including an egress-blocked default-mode run (P6, see `SECURITY_EVIDENCE.md`), and a
   hosted-demo packaging verification against the built hosted image run locally (P7, see
-  `SECURITY_EVIDENCE.md` §10).
+  `SECURITY_EVIDENCE.md` §10), and P8 UI/UX final validation (backend 163/163, frontend
+  33/33, frontend build, Docker health, and live upload-to-findings smoke test). P9 closes the
+  remaining case-study alignment gap by exposing the stack/data-flow page, approved-template
+  drafting support, and explicit Qdrant guidance visibility.
 - P5 implemented provider-portability UI/catalog/interface only — no real hosted-provider
   adapter. Real Anthropic/OpenAI/Gemini integration remains blocked on D-05 being accepted.
+- AI fallback transparency is implemented after P8: model-mode execution records
+  `mode_requested`, `mode_used`, `fallback_used`, and `fallback_reason`, and the UI visibly
+  labels fallback reviews instead of implying model-assisted output. See
+  `AI_MODEL_FALLBACK_APPENDIX.md`.
 - P6 deliberately does not implement authentication, TLS, rate limiting, or full
   enterprise-grade SSRF/egress allowlisting — see `SECURITY_EVIDENCE.md`'s "What P6 does NOT
   cover" section.
@@ -51,6 +62,9 @@ At the end of every phase:
   Render account to get a real public URL is **explicitly deferred to a later
   polish/optimization phase, by decision** — not treated as unfinished P7 scope.
   `docs/DEMO_RUNBOOK.md` documents exactly what to fill in once that later deploy happens.
+- P8 UI/UX and demo polish is complete. It is governed by `P8_UI_UX_POLISH_PLAN.md` and did
+  not change rule logic, model behavior, retrieval behavior, hosting/live URL status, or
+  PDF/export packaging.
 - Do not skip P0; each later phase assumes the previous phase is runnable.
 
 ## P0 Completion Notes
@@ -205,11 +219,11 @@ At the end of every phase:
   path — never at module import time, so app startup never depends on Ollama being
   reachable. Confirmed via `python -c "from app.main import app"` succeeding with no Ollama
   running.
-- **Deterministic mode is the default everywhere** (correction #1):
-  `Settings.clause_intelligence_mode` defaults to `"deterministic"` in `config.py` AND in
-  `docker-compose.yml`; `docker compose up` (no flags) starts only `backend`+`frontend`, no
-  `ollama` service — confirmed via `docker compose config --services`. Model mode requires
-  both `PART2_CLAUSE_INTELLIGENCE_MODE=model` and `docker compose --profile local-model up`.
+- **Runtime default split:** `Settings.clause_intelligence_mode` keeps a safe code-level
+  default of `"deterministic"` for tests/non-Compose runs, while local Docker Compose now
+  defaults to model-assisted mode against the shared on-prem Ollama VM. If the model path is
+  unavailable, review processing falls back to rules-only output with explicit provenance/UI
+  disclosure.
 - **`rule_engine.py` refactored, not rewritten:** extracted `evaluate_clauses(clause_inputs,
   playbook, source=...)` as the reusable, extraction-source-agnostic core; `evaluate_document`
   (P2 path) and the new P3 model path both funnel into it. All 27 pre-existing predicate
@@ -228,10 +242,11 @@ At the end of every phase:
 - **`/config/test` upgraded, backend-only** (correction #3, no admin UI editing/save work —
   still P5): real `GET /api/tags` Ollama reachability ping for `provider_type: ollama`;
   honest `PROVIDER_UNAVAILABLE` for any other provider.
-- **`docker-compose.yml`:** optional `ollama` service behind `profiles: ["local-model"]`,
-  never started by default. The PoC validation model is `qwen3:4b` because it is lighter
-  than 7B and Apache-2.0 licensed; larger permissively licensed local models remain
-  optional if quality is insufficient.
+- **`docker-compose.yml`:** after the shared-VM follow-up, `backend` and `frontend` remain
+  restart-enabled, while laptop-local `ollama` is profile-gated (`--profile local-model`) and
+  not started by default. Docker Compose defaults review processing to model-assisted mode
+  against the shared on-prem Ollama VM; if that path is unavailable, reviews fall back to
+  rules-only with explicit API/UI disclosure.
 - **Telemetry disabled:** `haystack-ai` pulls in `posthog` transitively;
   `HAYSTACK_TELEMETRY_ENABLED=False` set in `backend/app/__init__.py` (before any `haystack`
   import) and redundantly in `docker-compose.yml`.
@@ -370,13 +385,13 @@ at all in P4 — retrieval is wired entirely as post-processing in `job_runner.p
   disclaimer as `DEFENSE_PLAYBOOK_TEMPLATE.md`. No contract content is ever embedded or
   stored in Qdrant — only this authored corpus.
 - **Docker Compose:** new `qdrant` service (official `qdrant/qdrant`, Apache-2.0) behind a
-  new opt-in `retrieval` Compose profile, independent of P3's `local-model` profile. The
-  `ollama` service now belongs to both profiles (shared runtime: P3 uses it for `qwen3:4b`
-  classification, P4 uses it for embeddings). **No host port is published for Qdrant** —
+  new opt-in `retrieval` Compose profile. The `ollama` service is shared by P3/P4 and, after
+  the P8 follow-up, starts with the default local stack so Admin "Test connection" survives
+  laptop/Docker restarts. **No host port is published for Qdrant** —
   tighter than Ollama's setup, per `SECURITY_AND_DATA.md`'s "never expose its port publicly";
   `backend` and `index_guidance.py` (run inside the backend container) reach it only over the
-  internal Compose network. Confirmed via `docker compose config --services` that default
-  `docker compose up` still excludes both `ollama` and `qdrant`.
+  internal Compose network. Default `docker compose up` includes `backend`, `frontend`, and
+  `ollama`; `qdrant` remains excluded unless `--profile retrieval` is used.
 - **Dependency:** `qdrant-client>=1.12,<1.13` (Apache-2.0) added to `backend/pyproject.toml`.
 - **Tests:** 101 backend pytest cases pass (17 new): `test_guidance_loader.py` (corpus
   validation — every rule_id covered, rejects unknown rule_id/clause_type/category,
@@ -617,3 +632,366 @@ Implemented per the approved plan and its 5 corrections. Full factual evidence l
   artifact) afterward. Dependency/container vulnerability
   scan, SBOM, and secret scan also remain not done (already disclosed since P6, still out of
   scope here).
+
+## P8.1 Completion Notes (Dashboard API)
+
+Implemented per the approved proposal and Codex's 2 corrections.
+
+- **`GET /api/v1/reviews`** added to `backend/app/api/routes_reviews.py`, declared before
+  `GET /{review_id}` (explicit route-order correction). Summary-only: never returns
+  `evidence_text`, full `findings`/`missing_clauses`, `parsed_text`, or model/credential
+  internals — verified by a dedicated negative-assertion test.
+- **Retention shared, not duplicated (correction: reuse, not reimplement):** extracted the
+  existing P6 `_retention_hours_for`/`_is_expired` logic out of `routes_reviews.py` into
+  `backend/app/services/retention.py` as `retention_hours_for`/`is_expired`, with zero
+  behavior change (full suite re-run green before adding any new code). Both the single-GET
+  and the new list route now call the same functions. **Delete-on-encounter for expired
+  terminal reviews** (approved design choice) — the list endpoint deletes any expired row it
+  fetches on a page and excludes it from the response, matching `GET /{review_id}`'s existing
+  lazy delete-on-read precedent; a returned page may therefore contain fewer than `limit`
+  items when this happens (documented in `API_CONTRACT.md`).
+- **`ReviewRepository.list_summaries()` returns `list[tuple[Review, int, int, int]]`**
+  (correction: DTO/tuple per row, not bare `list[Review]`) — one page query
+  (`ORDER BY created_at DESC LIMIT/OFFSET`) plus one grouped aggregate query against
+  `Finding` (`func.count`/`func.sum(case(...))` keyed by `review_id`), regardless of page
+  size up to `limit=50`. Aggregate semantics verified identical to the existing
+  `_build_review_out` counting logic via a test comparing the list item's counts against the
+  same review's single-GET `review_summary`.
+- **Schemas:** added `ReviewSummaryItem`/`ReviewListOut` to `backend/app/schemas/review.py`
+  (additive only — no changes to `ReviewOut`/`ReviewSummary`/any existing response model).
+  `limit`/`offset` validated via FastAPI `Query(default=20, ge=1, le=50)` /
+  `Query(default=0, ge=0)`; `limit=51` returns `422`.
+- **No schema migration** — `list_summaries()` reads existing `Review`/`Finding` columns
+  only. **No frontend changes** — backend-only, confirmed via unaffected `npm run build`/
+  `npm run test`. **No rule/model/retrieval changes** — `rule_engine.py`, model adapters, and
+  `guidance_retrieval.py` untouched.
+- **Tests:** 9 new tests in `backend/tests/test_reviews_list.py` (empty list, ordering,
+  limit/offset, limit-over-max rejection, aggregate-count parity with single-GET, zeroed
+  counts for non-completed reviews, expired-review absence-and-deletion, payload exclusion
+  of evidence/full findings, demo-mode Basic Auth gating). Full backend suite: **158 passed**
+  (149 + 9 new, zero regressions from the retention-helper extraction).
+- **Live verification:** ran `GET /api/v1/reviews?limit=5` against the running Docker stack
+  (`legal-contract-review-ai-backend-1`, hot-reloaded via the existing bind-mounted
+  `--reload` uvicorn setup) — confirmed real newest-first review history with correct
+  aggregate counts and no leaked evidence/document text, matching the automated test
+  assertions.
+- **Demo-mode gating:** automatically covered by P7's blanket `DemoBasicAuthMiddleware`, no
+  route-specific auth code needed — verified with one test.
+- Full detail: `docs/API_CONTRACT.md` (new `GET /api/v1/reviews` section),
+  `docs/OUTPUT_SCHEMA.md` (new summary-list item shape), `docs/SECURITY_AND_DATA.md` (P8.1
+  retention note), `docs/IMPLEMENTATION_BACKLOG.md` (P8 checklist items checked off).
+
+## P8.2 Completion Notes (Brand and Shell)
+
+Implemented per the approved proposal, with Codex's 1 doc correction applied.
+
+- **Favicon replaced:** `frontend/public/favicon.svg` now a document/checkmark glyph (navy
+  fill, gold checkmark accent), replacing the previous unrelated abstract purple-blob mark
+  left over from the original scaffold. Reused as the header wordmark icon
+  (`App.tsx`'s `.brand-mark`, via `<img src="/favicon.svg">`) rather than a separate asset.
+- **Unused scaffold asset deleted:** `frontend/public/icons.svg` (confirmed unreferenced
+  anywhere in `frontend/src/` or `index.html` via grep before deletion).
+- **Palette:** `frontend/src/index.css` `:root` (and its `prefers-color-scheme: dark`
+  override) now define `--navy`/`--gold` and repoint `--accent` at `--navy`, matching the
+  navy/gold visual language already used in the Part 1/Part 3 case-study artifacts.
+  **`--risk-*` and the demo-mode warning colors (`badge-demo`/`demo-banner`) are
+  deliberately unchanged** — those are semantic/warning colors, not brand colors. Gold is
+  used only as a non-text accent (active-nav underline, focus outline) to avoid a WCAG
+  contrast failure that gold-as-text-color would cause.
+- **Typography:** font stack changed to `"Aptos", "Helvetica Neue", Arial, system-ui,
+  sans-serif`, matching Part 1/Part 3.
+- **Shell:** header gets a navy bottom border, wordmark + product name lockup, gold
+  active/hover nav underline; footer lightly restyled; new `:focus-visible` outline styles
+  (previously absent — a real accessibility gap, now closed) for keyboard navigation; a
+  mobile breakpoint added so the header/nav wraps cleanly under 640px instead of
+  overflowing next to the demo badge.
+- **Nav unchanged (doc-corrected before implementation):** stays `New review` +
+  conditional `Admin` only. No `Dashboard` link was added — that route is P8.3's, and a
+  link to a route that doesn't exist yet would look broken. The shell is visually ready to
+  receive it once P8.3 ships.
+- **No route changes:** `/` still redirects to `/review/new`, confirmed unchanged in
+  `App.tsx`. **No backend changes.** **No markup changes** to `ReviewNew.tsx`,
+  `ReviewStatus.tsx`, `AdminModel.tsx`, `FindingCard.tsx`, `FindingsList.tsx`,
+  `StageProgress.tsx`, `SummaryPanel.tsx`, `UploadForm.tsx`, or `DemoModeBadge.tsx` — their
+  colors shift only via the shared CSS variables, as anticipated in the approved proposal.
+- **Verification:** `npm run test -- --run` — 10/10 pass, no test edits needed (exact nav
+  label text and demo-banner copy preserved, satisfying `demo-mode.test.tsx`'s assertions
+  unchanged). `npm run build` — clean. Rebuilt and ran the hosted-image-adjacent local
+  Docker frontend container (`docker compose up -d --build frontend`) since
+  `frontend/public/` isn't bind-mounted in `docker-compose.yml` (only `src/` and
+  `index.html` are) — confirmed via browser screenshot in light mode, dark mode, desktop
+  width, and mobile width (375px): new favicon/wordmark renders, active-nav gold underline
+  works, header wraps correctly on mobile with no overflow, Admin page (local mode) renders
+  with the new palette applied via shared tokens with no visual regression.
+- Full detail: `docs/UI_SPEC.md` (P8.2 shell note), `docs/P8_UI_UX_POLISH_PLAN.md` (P8.2 row
+  and status flipped to complete, with the nav-wording correction applied).
+
+## P8.3 Completion Notes (Dashboard/Home)
+
+Implemented per the approved proposal, exactly matching all stated guardrails.
+
+- **New `Dashboard` page** (`frontend/src/pages/Dashboard.tsx`) fetches
+  `GET /api/v1/reviews?limit=50` once on mount (no auto-polling — a static snapshot is
+  honest and sufficient for this phase) via a new `listReviews()` client method
+  (`frontend/src/api/client.ts`) and matching `ReviewSummaryItem`/`ReviewListOut` types
+  (`frontend/src/api/types.ts`, mirroring the backend P8.1 schema exactly). **No backend
+  changes** — the P8.1 API already carried everything needed; no gap was found.
+- **`/` now renders `Dashboard`** instead of redirecting to `/review/new`
+  (`App.tsx`'s `<Route path="/" element={<Navigate .../>} />` replaced with
+  `<Route path="/" element={<Dashboard />} />`). `/review/new` is completely unchanged.
+- **`Dashboard` added as the first nav item** (`<NavLink to="/" end>`), and is **not**
+  conditionally hidden in demo mode — unlike `Admin`, it has no config/cloud implications;
+  demo-mode review history is already labeled synthetic-only by the existing persistent
+  `DemoModeBanner`. The `Admin` link's demo-mode hiding logic is byte-for-byte unchanged.
+- **Metrics are strictly real and honestly scoped, per the approved guardrails:**
+  - "Reviews shown" is always phrased "N (up to 50 most recently retained)" — never "Total
+    reviews" or "All reviews", since P6's retention policy actively deletes older rows and
+    the API caps at `limit=50`.
+  - Completed / In progress / Failed counts computed from `status` directly.
+  - Risk distribution (Critical/High/Medium/Low) computed from `overall_risk` among
+    completed items only.
+  - Retrieval mode split (qdrant vs. degraded) computed from `retrieval_mode` among
+    completed items only (non-completed rows carry a not-yet-meaningful DB default and are
+    excluded to avoid misleading noise).
+  - **No fake ROI, time-saved, money-saved, or "risks prevented" claims anywhere** — and no
+    summed "total findings caught" headline stat either, deliberately excluded since it
+    would read as an implied value pitch even though it's real, derivable data.
+- **Recent Reviews table**: up to 10 most recent (client-side slice of the fetched 50,
+  sorted by `created_at` desc), semantic `<table>` markup, each "View" link to the existing
+  `/reviews/{id}` route (no new page) carries a per-row accessible name
+  (`aria-label="View review for {document_name}"`) so multiple identical "View" link texts
+  are distinguishable to screen readers — confirmed via `read_page` in the live browser
+  check. Table wrapped in its own `overflow-x: auto` container so it scrolls independently
+  on narrow viewports instead of causing page-wide horizontal scroll.
+- **Empty state**: "No reviews yet. Start your first contract review." + CTA, not an error
+  — a normal, expected state for a fresh instance.
+- **Loading/error states** mirror the established `ReviewStatus.tsx` pattern exactly
+  (`ApiRequestError` → `role="alert"` with the real message; generic fallback otherwise).
+- **Tests:** 7 new tests in `frontend/tests/dashboard.test.tsx` — loading, API error,
+  empty state, computed-stats-and-table-rendering with explicit negative assertions that no
+  "Total reviews"/"All reviews"/"hours saved"/"money saved"/"risk(s) prevented"/"ROI" text
+  ever appears, Dashboard nav visible in both local and demo mode (with Admin still hidden
+  in demo mode), and root route `/` rendering Dashboard content instead of redirecting.
+  Full frontend suite: **17 passed** (10 existing + 7 new, zero regressions).
+- **Verification:** `npm run test -- --run` 17/17 pass; `npm run build` clean; backend
+  suite re-run unaffected (**158/158**, confirming zero backend touch as required). Live
+  browser check against the running Docker stack's real review history (hot-reloaded, no
+  rebuild needed since `frontend/src/` is bind-mounted): light mode, dark mode, desktop, and
+  mobile (375px) all verified — real counts (12 reviews shown, 12 completed, correct risk
+  distribution, correct retrieval split), recent-reviews table renders with working,
+  correctly-hrefed View links, table scrolls horizontally on its own on mobile without
+  page overflow, and navigating directly to a review from the dashboard's data confirmed the
+  existing findings screen still renders correctly with the P8.2 palette applied.
+- Full detail: `docs/UI_SPEC.md` (P8.3 Dashboard/Home section),
+  `docs/P8_UI_UX_POLISH_PLAN.md` (P8.3 row flipped to complete).
+
+## P8.4 Completion Notes (Upload Screen Polish)
+- **Scope:** frontend-only, no backend/rule/model/retrieval changes — no blocker was found
+  that required one.
+- **`frontend/src/pages/ReviewNew.tsx`:** restyled from a bare "Start a contract review" page
+  into `New Legal Review` with a one-line pipeline lede; a page-level "Active playbook"
+  summary card (`role="region"`, `aria-label="Active playbook summary"`) showing the playbook
+  id (`defense-services-v1`), version (`1.0-draft`), rule count (`27`, hardcoded static
+  display text — reused from the already-verified P8.1-era playbook fact check, not a new
+  backend endpoint since this is static per-playbook data, not per-review data), the 8
+  required clause families in plain language, and a "Produces:" line listing the finding
+  output shape (deviation flags, missing clauses, risk labels, evidence, recommended
+  actions — a description of the output schema, not a performance claim); a 5-stage
+  `workflow-strip` (Upload → Parse → Extract clauses → Apply playbook → Structured findings);
+  and a hosting-neutral trust note ("Processed on this server and never sent to a public AI
+  service.") that deliberately avoids "on-premises"/"on-prem"/"air-gapped" wording since the
+  same screen can render in hosted Demo mode.
+- **`frontend/src/components/UploadForm.tsx`:** removed the inline `.playbook-info` line
+  (superseded by the new page-level card) and the now-unused `playbookId` prop from `Props`
+  and the component signature. Upload mechanics — dropzone drag/drop, browse, file-type/size
+  validation (`.pdf`/`.docx`, 15 MB), error display, and the submit button — are byte-for-byte
+  unchanged, including the exact strings `golden-path.test.tsx` depends on ("Drag and drop a
+  contract here...", "Upload a PDF or DOCX file.", "Review contract").
+- **`frontend/src/index.css`:** added `.playbook-card`, `.playbook-card-label`,
+  `.playbook-clause-list` (2-column), `.trust-note`; removed the now-dead `.playbook-info`
+  rules; renamed `.dashboard-workflow` → shared `.workflow-strip` (used by both `ReviewNew`
+  and `Dashboard`).
+- **`frontend/src/pages/Dashboard.tsx`:** one-line className update
+  (`dashboard-workflow` → `workflow-strip`) to match the renamed shared class; no other
+  changes.
+- **Explicitly declined, per approved scope:** no demo-mode acknowledgement checkbox was
+  added (the existing global, non-dismissible `DemoModeBanner` in `App.tsx` already carries
+  that disclosure; adding new interactive gating logic was judged out of scope for a
+  visual-polish phase and was explicitly called out and confirmed with the user before
+  implementation).
+- **Tests:** new `frontend/tests/review-new.test.tsx` (5 tests) — playbook card renders the
+  real playbook id/version/rule-count/clause-family/output-shape text; the 5-stage workflow
+  strip renders; the trust note text is present and negative-asserts against
+  "on-premises"/"on-prem"/"air-gapped"; no ROI/hours-saved/money-saved/risks-prevented text
+  appears; the protected drag-and-drop label and `Review contract` button are preserved.
+  `golden-path.test.tsx` required no changes and still passes unmodified. Full frontend
+  suite: **22 passed** (17 existing + 5 new, zero regressions).
+- **Verification:** `npm run test -- --run` 22/22 pass; `npm run build` clean; backend suite
+  re-run unaffected (**158/158**, confirming zero backend touch). Live browser check against
+  the running Docker stack (hot-reloaded via bind-mounted `frontend/src/`, no rebuild
+  needed): dark desktop, light desktop, and dark mobile (375px, confirmed
+  `document.documentElement.scrollWidth === window.innerWidth`, no horizontal overflow) all
+  rendered correctly with no console errors. A live drag-and-drop file upload could not be
+  driven through the Browser-pane automation (no file-input-set capability in that tool), so
+  the "unchanged upload behavior" claim rests on: (a) the unmodified, passing
+  `golden-path.test.tsx`, which exercises the full submit → `createReview` → navigate →
+  findings-render path against a mocked API and is unaffected by this change set, and (b) a
+  visual/DOM confirmation that the dropzone, file input, hint text, and submit button are
+  present and unchanged in the live preview. This is disclosed as a verification-method
+  limitation, not a behavior change.
+- Full detail: `docs/UI_SPEC.md` (Review Screen P8.4 note), `docs/P8_UI_UX_POLISH_PLAN.md`
+  (P8.4 row flipped to complete).
+
+## P8.5 Completion Notes (Findings Screen Polish)
+- **Scope:** frontend-only, no backend/rule/model/retrieval/schema changes — no blocker was
+  found that required one.
+- **`frontend/src/pages/ReviewStatus.tsx`:** added `<h1>Review result</h1>` and a compliance
+  banner (`.findings-disclaimer`) in the completed-review branch only, with the exact
+  approved copy: "Findings are decision support only, not legal advice. Final risk labels
+  are assigned by the deterministic playbook rule engine. Supplemental guidance, when shown,
+  is illustrative context only and does not change any finding's risk label." Polling
+  (`useEffect`/`getReview`/`setTimeout`), the loading/failed/in-progress branches, and the
+  route path are all unchanged.
+- **`frontend/src/components/SummaryPanel.tsx`:** the flat `.summary-counts` `<ul>` was
+  split into a "Findings by severity" group (Critical/High/Medium/Low, unchanged numbers)
+  and a separate callout row for "Missing clauses"/"Needs review" — same
+  `review_summary` fields, no data removed, purely a markup/CSS restructure.
+- **`frontend/src/components/FindingsList.tsx`:** the existing severity/clause-type/
+  low-compliant filter state and the `visible` filtering logic are byte-for-byte unchanged.
+  Only the *rendering* of `visible` changed: it's now split into
+  `visibleDeviations`/`visibleMissingClauses` by `finding_type`, and `visibleDeviations` is
+  rendered under per-severity `<h2>` subheadings (`Critical (n)`, `High (n)`, etc., only
+  non-empty groups render) followed by a separate "Missing clauses (n)" section. The
+  `Filters` panel got a heading; its inputs and `onChange` handlers are unchanged.
+- **`frontend/src/components/FindingCard.tsx`:** added `.field-label` captions ("Evidence",
+  "Why this is flagged", "Recommended action") above the existing evidence/reason/action
+  blocks — the underlying text content is unchanged (the previous inline `<strong>Recommended
+  action:</strong>` prefix was replaced by the new label, not duplicated). The guidance
+  panel's `<summary>`/disclaimer/list markup and copy are **completely unchanged**; only its
+  container CSS gained a border/background so it reads as visually distinct from the
+  finding's rule-derived content.
+- **`frontend/src/index.css`:** new `.findings-disclaimer`, `.summary-stats-group`,
+  `.summary-stats-label`, `.summary-counts-callout`, `.filters-heading`, `.severity-group`,
+  `.severity-group-heading`, `.severity-group-count`, `.missing-clauses-section`,
+  `.finding-field`, `.field-label` rules; `.guidance-panel` restyled to a bordered/tinted
+  container (copy untouched).
+- **Tests:** new `frontend/tests/findings-screen.test.tsx` (4 tests, rendering `ReviewStatus`
+  against a mocked `getReview` with 2 deviation findings across 2 severities plus 1 missing
+  clause) — compliance banner shows all three required claims; findings are grouped under
+  the correct severity headings and missing clauses render in their own section, not mixed
+  in; evidence/reasoning/recommendation field labels render without losing any finding
+  content; the page `h1` and the missing-clause/needs-review counts are present.
+  `golden-path.test.tsx` required **zero changes** and still passes unmodified against the
+  new markup. Full frontend suite: **26 passed** (22 existing + 4 new, zero regressions).
+- **Verification:** `npm run test -- --run` 26/26 pass; `npm run build` clean; backend suite
+  re-run unaffected (**158/158**, confirming zero backend touch). Live browser check against
+  the running Docker stack (hot-reloaded via bind-mounted `frontend/src/`, no rebuild
+  needed): navigated directly to a real completed review
+  (`sentinel-support-agreement.pdf`, 8 findings across Critical/High/Low + 1 missing clause)
+  fetched live from `GET /api/v1/reviews`. Confirmed the compliance banner, severity-grouped
+  headings (`Critical (1)`, `High (4)` visible with the default filter set, `Missing clauses
+  (1)`), field labels, and every finding's rule ID/evidence/reasoning/recommendation/source/
+  confidence rendered with no data loss, in dark mobile (375px, no horizontal overflow) and
+  light desktop, with no console errors.
+- Full detail: `docs/UI_SPEC.md` (Findings Screen P8.5 note), `docs/P8_UI_UX_POLISH_PLAN.md`
+  (P8.5 row flipped to complete).
+
+## P8.6 Completion Notes (Admin Screen Polish)
+- **Scope:** frontend-only, no backend/config-provider/schema changes — no blocker was found
+  that required one. Existing API calls remain `GET /config`, `GET /config/providers`,
+  `PUT /config`, and `POST /config/test`.
+- **`frontend/src/pages/AdminModel.tsx`:** restyled `/admin/model` into a clearer enterprise
+  runtime-provider configuration screen. Added a `Runtime Provider Configuration` heading
+  and lede stating this is provider orchestration for the structured review pipeline, not a
+  chatbot setting; added posture cards for deterministic rule-engine authority, Docker
+  Ollama/local runtime path, and hosted-provider placeholders; added a current-config
+  summary card; added a provider catalog showing enabled/disabled status; added security
+  notes and a connection-test panel. The original form controls, provider select, model
+  field, Ollama base URL field, write-only credential field, Save, and Test connection
+  behavior are preserved.
+- **Provider-status guardrail:** Ollama remains the only enabled/saveable provider. Anthropic,
+  OpenAI, and Gemini are shown as disabled placeholders only; the screen explicitly states
+  D-05 remains open and no cloud adapter is enabled by the UI.
+- **Security guardrail:** credentials remain write-only and are never pre-filled or displayed
+  after save. The connection test is labelled as a reachability check only and explicitly
+  does not run a review or expose credentials. Demo-mode copy states production
+  configuration changes remain server-side locked and admin-entered credentials clear on
+  service restart.
+- **`frontend/src/index.css`:** added scoped admin card/catalog/security/connection-panel
+  styles using the existing navy/gold palette and semantic status colors.
+- **Tests:** expanded `frontend/tests/admin-model.test.tsx` from 6 to 8 tests. New/updated
+  assertions cover the runtime-configuration/chabot distinction, rule-engine authority
+  wording, D-05/open-cloud-adapter wording, disabled-provider catalog status, safe credential
+  display, reachability-only connection-test wording, and demo-mode lock copy. Full frontend
+  suite: **28 passed** (26 existing + 2 net new, zero regressions).
+- **Verification:** `npm run test -- --run` 28/28 pass; `npm run build` clean. Backend suite
+  will be rerun as part of the P8.6 final validation gate, but no backend files were edited.
+- Full detail: `docs/UI_SPEC.md` (Admin Model Screen P8.6 note),
+  `docs/P8_UI_UX_POLISH_PLAN.md` (P8.6 row flipped to complete).
+
+## P8.7 Completion Notes (Documentation and Final Validation)
+- **Scope:** final P8 reconciliation and validation only. No feature, rule, model, retrieval,
+  schema, hosting, or PDF/export changes were made in P8.7.
+- **Documentation reconciliation:** P8 status was updated to `complete` in
+  `docs/P8_UI_UX_POLISH_PLAN.md`, `docs/IMPLEMENTATION_PHASE_PLAN.md`,
+  `docs/IMPLEMENTATION_BACKLOG.md`, `docs/PLAN.md`, `docs/AGENT_HANDOFF.md`, and
+  `docs/MASTER_INDEX.md`. P8.1-P8.7 are now consistently marked complete; hosting/live URL
+  and PDF/export remain explicitly out of scope for P8.
+- **Validation evidence:** frontend suite passed (**28/28**); frontend production build passed;
+  backend suite passed (**158/158**, rerun outside the sandbox because mocked Ollama tests bind
+  a local HTTP socket); Docker Compose reported backend/frontend containers up on ports
+  **8420/5420**; backend readiness returned `{"status":"ok",...}`; frontend returned HTTP
+  200.
+- **Live smoke evidence:** uploaded `fixtures/sentinel-support-agreement.pdf` to the running
+  backend at `POST /api/v1/reviews`; the review completed with `overall_risk: Critical`, **7
+  deviation findings**, and **1 missing clause**. This confirms the P8 UI polish did not break
+  the underlying upload-to-findings workflow.
+- **Exit position:** P8 is ready for user browser review. Remaining deferred work is outside
+  P8: live public URL deployment and PDF/export packaging.
+
+## P8.8 Completion Notes (Admin Playbook Viewer)
+- **Scope:** read-only playbook visibility requested after P8.7. CRUD was deliberately not
+  implemented because editing/removing playbook rules changes legal risk decisions and would
+  require versioning, validation, audit trail, rollback, and explicit approval.
+- **Backend:** added `GET /api/v1/playbooks/active` (`backend/app/api/routes_playbooks.py`)
+  and typed response models (`PlaybookOut`, `PlaybookRuleOut`, `PlaybookClauseFamilyOut`).
+  The endpoint loads the active `defense-services-v1` playbook through the existing loader
+  and returns a UI-safe view: playbook id/version, editable=false, edit policy, clause
+  families, missing-clause mappings, and all 27 rules. It does not expose file paths, loader
+  internals, credentials, prompts, or document content.
+- **Frontend:** added `/admin/playbook` (`frontend/src/pages/AdminPlaybook.tsx`) and a
+  local-mode `Playbook` nav link. The page shows overview metrics, severity coverage,
+  required clause-family cards, missing-clause rule ids, and a full responsive rule catalogue. It is hidden
+  in hosted Demo mode with the existing Admin/configuration navigation.
+- **Behavior guardrail:** no rule engine, playbook JSON, model adapter, retrieval logic,
+  upload workflow, or review-result schema was changed.
+- **Tests:** added `backend/tests/test_playbooks_api.py` (3 tests) and
+  `frontend/tests/admin-playbook.test.tsx` (5 tests). Validation after implementation:
+  backend 163/163 passed, frontend 33/33 passed, frontend build clean.
+
+## P9 Completion Notes (Case-Study Alignment)
+- **P9.1 Architecture/Stack/Data Flow:** added `/architecture` and `Architecture` nav. The
+  page explains React/Vite, FastAPI, Haystack, Ollama-compatible model runtime, Qdrant,
+  SQLite, pypdf/python-docx, deterministic playbook authority, secure data-flow steps, and
+  trust boundaries. It is visible in local and demo modes and exposes no secrets. Targeted
+  validation: `frontend/tests/architecture.test.tsx` passed and frontend build passed.
+- **P9.2 Approved-Template Drafting Support:** added `backend/app/services/drafting.py`,
+  `suggested_draft_clause` response schema, API serialization, and a collapsed
+  `Suggested approved clause language` panel in `FindingCard`. Drafting is deterministic
+  template language keyed by `rule_id`, not free-form generation; every panel says Legal
+  approval is required. Targeted validation: backend golden-path tests passed and frontend
+  findings/golden-path tests passed.
+- **P9.3 Qdrant Guidance Visibility:** dashboard now shows Qdrant guidance coverage as an
+  operating-mode card; completed review pages show `Qdrant supplemental guidance active` or
+  `Qdrant guidance unavailable` with explicit "rule review unaffected" copy. Raw enum
+  values such as `degraded_full_rules` remain hidden from users. Targeted validation:
+  dashboard/findings/architecture frontend tests passed and build passed.
+- **Behavior guardrail:** no rule-engine predicates, risk aggregation, playbook JSON,
+  model-adapter behavior, or Qdrant retrieval behavior changed.
+- **Final validation:** backend suite **163/163 passed** (rerun with local socket binding
+  permission for mocked Ollama tests); frontend suite **38/38 passed**; frontend production
+  build clean; Docker Compose rebuilt backend/frontend on **8420/5420**; live upload of
+  `fixtures/sentinel-support-agreement.pdf` completed with `mode_requested: model`,
+  `mode_used: model`, `fallback_used: false`, `overall_risk: Critical`,
+  `retrieval_mode: degraded_full_rules`, and approved-template draft support on all returned
+  finding/missing-clause items.

@@ -16,13 +16,12 @@ class Settings(BaseSettings):
     playbook_dir: str = "../playbooks"
 
     provider_type: str = "ollama"
-    model_name: str = "qwen3:4b"
-    base_url_display: str = "http://ollama:11434"
+    model_name: str = "qwen3.6:35b"
+    base_url_display: str = "configured, hidden"
 
-    # P3: default is "deterministic" everywhere (local dev, Docker, CI) so the
-    # app runs and its default docker-compose stack stays lightweight without
-    # requiring Ollama. "model" is opt-in only (env var + the `local-model`
-    # Compose profile), never enabled by default.
+    # Non-Compose/local tests keep a deterministic default so CI does not need
+    # a model server. Docker Compose overrides this to "model" and points to the
+    # shared on-prem Ollama VM; rules-only remains the explicit fallback.
     clause_intelligence_mode: str = "deterministic"
     ollama_base_url: str = "http://ollama:11434"
     ollama_timeout_s: float = 60.0

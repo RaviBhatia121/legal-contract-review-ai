@@ -14,14 +14,14 @@ services:
       PART2_CORS_ALLOW_ORIGINS: '["http://localhost:${FRONTEND_PORT:-5420}"]'
       PART2_PLAYBOOK_DIR: /app/playbooks
       PART2_PROVIDER_TYPE: ollama
-      PART2_MODEL_NAME: ${MODEL_NAME:-qwen3:4b}
-      PART2_BASE_URL_DISPLAY: http://ollama:11434
-      # P3: deterministic by default (see Settings.clause_intelligence_mode).
-      # Set to "model" only alongside `--profile local-model` (which starts
-      # the ollama service below); never on by default.
-      PART2_CLAUSE_INTELLIGENCE_MODE: ${CLAUSE_INTELLIGENCE_MODE:-deterministic}
-      PART2_OLLAMA_BASE_URL: http://ollama:11434
-      PART2_OLLAMA_TIMEOUT_S: ${OLLAMA_TIMEOUT_S:-60}
+      PART2_MODEL_NAME: ${MODEL_NAME:-qwen3.6:35b}
+      PART2_BASE_URL_DISPLAY: ${OLLAMA_BASE_URL_DISPLAY:-configured, hidden}
+      # P3/P8 follow-up: the local Docker app uses model-assisted mode by default,
+      # pointing to the shared on-prem Ollama VM. Deterministic rules remain the
+      # disclosed fallback if the VM/model path is unavailable.
+      PART2_CLAUSE_INTELLIGENCE_MODE: ${CLAUSE_INTELLIGENCE_MODE:-model}
+      PART2_OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      PART2_OLLAMA_TIMEOUT_S: ${OLLAMA_TIMEOUT_S:-180}
       # P4: retrieval is opt-in via the `retrieval` profile below. The
       # backend always talks to Qdrant through this URL; if unreachable it
       # degrades to `degraded_full_rules` without failing the review.
@@ -65,17 +65,11 @@ services:
     depends_on:
       - backend
 
-  # Optional, opt-in only: `docker compose --profile local-model up` or
-  # `docker compose --profile retrieval up` (this service is shared by both
-  # profiles — P3 uses it for qwen3:4b classification, P4 uses it for
-  # multilingual-e5-small embeddings; either profile starts it).
-  # Not started by default docker compose up (correction #1) — pulling a
-  # multi-GB model is not something the default lightweight stack should do.
-  # After it's up: `docker compose exec ollama ollama pull qwen3:4b` (P3) and/or
-  # `docker compose exec ollama ollama pull qllama/multilingual-e5-small` (P4).
+  # Optional only: use this service if no shared Ollama VM is available.
+  # It is not started by default, so the laptop does not carry local model load.
   ollama:
     image: ollama/ollama:latest
-    profiles: ["local-model", "retrieval"]
+    profiles: ["local-model"]
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
     volumes:

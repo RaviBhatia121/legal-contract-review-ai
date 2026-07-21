@@ -16,6 +16,7 @@ PROMPT_SPEC.md's repair rule.
 """
 
 import json
+import re
 import time
 
 import httpx
@@ -110,11 +111,11 @@ class OllamaAdapter:
         return PingResult(ok=True, latency_ms=latency_ms, model_name=self.model_name)
 
     async def _generate_validated(self, prompt: str, schema_model: type):
-        raw_text = await self._generate(prompt)
+        raw_text = _extract_json_object(await self._generate(prompt))
         try:
             return schema_model.model_validate_json(raw_text)
         except ValidationError as exc:
-            repaired_text = await self._generate(self._repair_prompt(raw_text, exc, schema_model))
+            repaired_text = _extract_json_object(await self._generate(self._repair_prompt(raw_text, exc, schema_model)))
             try:
                 return schema_model.model_validate_json(repaired_text)
             except ValidationError as exc2:
@@ -154,3 +155,42 @@ class OllamaAdapter:
 
         envelope = resp.json()
         return envelope["message"]["content"]
+
+
+def _extract_json_object(text: str) -> str:
+    """Return the first complete JSON object from a model response.
+
+    Qwen reasoning-capable models can still prepend `<think>...</think>` or
+    explanatory prose despite JSON-mode/think controls. The adapter boundary
+    keeps the rest of the pipeline strict by extracting only the JSON object
+    before Pydantic validation.
+    """
+    cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+    if cleaned.startswith("{") and cleaned.endswith("}"):
+        return cleaned
+
+    start = cleaned.find("{")
+    if start == -1:
+        return cleaned
+
+    depth = 0
+    in_string = False
+    escape = False
+    for index, char in enumerate(cleaned[start:], start=start):
+        if in_string:
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return cleaned[start : index + 1]
+    return cleaned

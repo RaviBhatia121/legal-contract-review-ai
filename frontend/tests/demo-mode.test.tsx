@@ -18,8 +18,8 @@ import { getConfig } from "../src/api/client";
 const BASE_CONFIG: RuntimeConfig = {
   deployment_mode: "local",
   provider_type: "ollama",
-  model_name: "qwen3:4b",
-  base_url_display: "http://ollama:11434",
+  model_name: "qwen3.6:35b",
+  base_url_display: "configured, hidden",
   has_credential: false,
   playbook_id: "defense-services-v1",
   synthetic_data_only: false,

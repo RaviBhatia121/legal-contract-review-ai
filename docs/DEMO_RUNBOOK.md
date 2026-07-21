@@ -9,12 +9,14 @@ deployment target is fully on-premises (Docker-based Ollama/Qdrant, no cloud cal
 State this explicitly in the presentation (step 6 below) and never present the hosted
 run as equivalent to, or a substitute for, the on-prem verification evidence.
 
-**Local stack reliability note:** `backend` and `frontend` run with `restart: unless-stopped`
-in `docker-compose.yml`, so the local demo stack comes back on its own if Docker restarts
-(e.g. after the host reboots) — you should not normally need to run `docker compose up`
-again before a demo. If the stack is still down (e.g. Docker Desktop itself wasn't running),
-fall back to `docker compose up -d --build` and re-check `docker compose ps` before
-presenting.
+**Local stack reliability note:** `backend`, `frontend`, and `ollama` run with
+`restart: unless-stopped` in `docker-compose.yml`, so the local demo stack and Admin
+`Test connection` path come back on their own if Docker restarts (e.g. after the host
+reboots) — you should not normally need to run `docker compose up` again before a demo.
+Review processing remains deterministic by default; Ollama being up only makes the optional
+provider test available. If the stack is still down (e.g. Docker Desktop itself wasn't
+running), fall back to `docker compose up -d --build` and re-check `docker compose ps`
+before presenting.
 
 ## Demo Preconditions
 - Hosted URL: `TBD` — the live Render deploy is **deferred to a later polish/optimization

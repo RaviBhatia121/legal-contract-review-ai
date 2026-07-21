@@ -177,12 +177,14 @@ Ollama/Qdrant/internet at all.
 |---|---|---|
 | backend | Yes, `8420` (unchanged) | default |
 | frontend | Yes, `5420` (unchanged) | default |
-| ollama | Yes, `11434` (needed for `ollama pull`/direct testing) | `local-model`, `retrieval` (opt-in) |
+| ollama | No by default; optional `11434` only if `--profile local-model` is used | `local-model` (opt-in) |
 | qdrant | No | `retrieval` (opt-in) |
 
-Confirmed via `docker compose config --services` (default: `backend`,
-`frontend` only) and `docker compose --profile retrieval config --services`
-(adds `ollama`, `qdrant`). Other locally running Docker projects
+Current shared-VM follow-up behavior: default `docker compose up` starts only `backend`
+and `frontend`; model-assisted review calls the shared on-prem Ollama VM
+(`http://<ollama-vm-ip>:11434`, `qwen3.6:35b`). The laptop-local Ollama service is retained
+only as an opt-in fallback profile and is not running in the accepted local demo state.
+Other locally running Docker projects
 (`ai-boardroom-*`, `omniflow-*`) confirmed unaffected throughout all P6
 work (container uptime unchanged before/after).
 

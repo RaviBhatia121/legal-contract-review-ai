@@ -6,7 +6,7 @@ from fastapi.exceptions import HTTPException as FastAPIHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-from app.api import routes_config, routes_health, routes_reviews
+from app.api import routes_config, routes_health, routes_playbooks, routes_reviews
 from app.core.config import get_settings
 from app.core.job_runner import recover_interrupted_jobs
 from app.core.middleware import DemoBasicAuthMiddleware, MaxBodySizeMiddleware
@@ -52,6 +52,7 @@ def create_app() -> FastAPI:
 
     app.include_router(routes_health.router)
     app.include_router(routes_config.router)
+    app.include_router(routes_playbooks.router)
     app.include_router(routes_reviews.router)
 
     # P7: serve the built frontend same-origin from the backend in the

@@ -15,8 +15,9 @@ Detailed specifications are reconciled against this baseline. Items marked `Prop
 | Vector database (P4, in use) | Qdrant | Apache-2.0 | Supplemental playbook guidance retrieval, queried post-processing |
 | Vector database client (P4, in use) | `qdrant-client` 1.12 | Apache-2.0 | Async Qdrant SDK used by `backend/app/services/guidance_retrieval.py` |
 | Result store | SQLite | Public domain | Prototype jobs, metadata, and structured results |
-| Local runtime | Docker-based Ollama | MIT | Isolated, removable on-premises model serving for PoC validation and embeddings |
-| PoC reference LLM | Qwen3-4B (`qwen3:4b`) | Apache-2.0 | Lightweight locally runnable structured extraction/classification |
+| Model runtime | Ollama on shared on-prem VM | MIT | On-premises model serving without running a heavy local model on the demo laptop |
+| Current demo LLM | `qwen3.6:35b` | Apache-2.0 (Qwen3 family) | Shared-VM structured extraction/classification for browser demo validation |
+| Historical P3 validation LLM | Qwen3-4B (`qwen3:4b`) | Apache-2.0 | Earlier Docker-local validation evidence; no longer the current demo default |
 | Optional stronger LLM | Qwen2.5-7B-Instruct | Apache-2.0 | Larger fallback if the lightweight model cannot pass the golden fixture |
 | Embeddings (P4, in use) | `intfloat/multilingual-e5-small`, served via `qllama/multilingual-e5-small` (Ollama GGUF) | MIT | Local guidance-corpus and query embeddings for Qdrant retrieval |
 | Packaging | Docker Compose | Apache-2.0 | Repeatable local and hosted deployment |
@@ -48,6 +49,13 @@ Detailed specifications are reconciled against this baseline. Items marked `Prop
   `qwen2.5:3b-instruct` was considered but rejected for this case-study baseline because
   its model card lists `qwen-research`, not Apache-2.0. `llama3.2:3b` was also not selected
   because the Meta Llama license is not one of the preferred MIT/Apache/BSD-style licenses.
+- **P8 shared-VM runtime update:** current local browser demos use the existing on-prem
+  Ollama VM at `http://<ollama-vm-ip>:11434` with `qwen3.6:35b`, because laptop-local model
+  pulls/runtime proved too heavy and slow for repeated manual demos. This is still
+  local/on-premises, not a cloud API. The laptop-local Compose `ollama` service is retained
+  only as an opt-in fallback profile. The Qwen3 family is documented by QwenLM as Apache-2.0
+  for open-weight models; verify the exact pinned artifact/model card again before any
+  production procurement, but the PoC model-family license posture is commercially viable.
 - **P4 embedding-model spike (go/no-go — the already-accepted `intfloat/multilingual-e5-small`
   was never silently replaced):** `ADR-005`/`D-04` accepted `multilingual-e5-small`
   (MIT) but never verified it was actually servable through this project's Docker-Ollama-only
@@ -80,6 +88,8 @@ Qdrant/embedding-model spike confirmed 2026-07-19 (P4):
 - Qdrant self-hosted security guidance: https://qdrant.tech/documentation/security/
 - Ollama MIT license: https://github.com/ollama/ollama/blob/main/LICENSE
 - Ollama security policy: https://github.com/ollama/ollama/blob/main/SECURITY.md
+- Qwen3 repository license statement: https://github.com/QwenLM/Qwen3
+- Qwen3 Apache-2.0 license example: https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507/blob/main/LICENSE
 - Qwen3-4B Apache-2.0 model: https://huggingface.co/Qwen/Qwen3-4B
 - FastAPI MIT license: https://github.com/fastapi/fastapi/blob/master/LICENSE
 - Vite MIT license: https://github.com/vitejs/vite

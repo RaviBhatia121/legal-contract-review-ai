@@ -28,6 +28,18 @@ function GuidancePanel({ guidance }: { guidance: Finding["guidance"] }) {
   );
 }
 
+function DraftClausePanel({ draft }: { draft: Finding["suggested_draft_clause"] }) {
+  if (!draft) return null;
+  return (
+    <details className="draft-clause-panel">
+      <summary>Suggested approved clause language</summary>
+      <p className="draft-disclaimer">{draft.approval_note}</p>
+      <blockquote>{draft.text}</blockquote>
+      <p className="hint">Source: {draft.source.replaceAll("_", " ")}</p>
+    </details>
+  );
+}
+
 export function FindingCard({ finding }: { finding: Finding }) {
   const isMissing = finding.finding_type === "missing_clause";
   return (
@@ -43,13 +55,22 @@ export function FindingCard({ finding }: { finding: Finding }) {
       {finding.title && <h3>{finding.title}</h3>}
       {finding.section_reference && <p className="section-ref">{finding.section_reference}</p>}
       {finding.evidence_text && (
-        <blockquote className="evidence">{finding.evidence_text}</blockquote>
+        <div className="finding-field">
+          <p className="field-label">Evidence</p>
+          <blockquote className="evidence">{finding.evidence_text}</blockquote>
+        </div>
       )}
-      {finding.deviation_reason && <p className="reason">{finding.deviation_reason}</p>}
+      {finding.deviation_reason && (
+        <div className="finding-field">
+          <p className="field-label">Why this is flagged</p>
+          <p className="reason">{finding.deviation_reason}</p>
+        </div>
+      )}
       {finding.recommended_action && (
-        <p className="action">
-          <strong>Recommended action:</strong> {finding.recommended_action}
-        </p>
+        <div className="finding-field">
+          <p className="field-label">Recommended action</p>
+          <p className="action">{finding.recommended_action}</p>
+        </div>
       )}
       <footer>
         <span>Source: {finding.source}</span>
@@ -58,6 +79,7 @@ export function FindingCard({ finding }: { finding: Finding }) {
         )}
         {finding.needs_review && <span className="needs-review-tag">Needs review</span>}
       </footer>
+      <DraftClausePanel draft={finding.suggested_draft_clause} />
       <GuidancePanel guidance={finding.guidance} />
     </article>
   );

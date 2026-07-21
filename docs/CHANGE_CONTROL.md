@@ -25,6 +25,7 @@ live under `docs/` except `README.md`, which is at the repo root.
 - `DATA_MODEL.md`
 - `OUTPUT_SCHEMA.md`
 - `API_CONTRACT.md`
+- `AI_MODEL_FALLBACK_APPENDIX.md`
 - `UI_SPEC.md`
 - `DEFENSE_PLAYBOOK_TEMPLATE.md`
 - `RULE_EVALUATION_SPEC.md`
@@ -35,6 +36,7 @@ live under `docs/` except `README.md`, which is at the repo root.
 - `TRACEABILITY_MATRIX.md`
 - `RISK_REGISTER.md`
 - `IMPLEMENTATION_PHASE_PLAN.md`
+- `P8_UI_UX_POLISH_PLAN.md`
 - `IMPLEMENTATION_BACKLOG.md`
 - `EXECUTION_PLAN_48H.md`
 - `DEMO_RUNBOOK.md`

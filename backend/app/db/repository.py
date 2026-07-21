@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import Settings
 from app.db.models import Clause, Finding, Review
+from app.services.retention import is_expired
 
 
 class ReviewRepository:
@@ -85,6 +87,10 @@ class ReviewRepository:
         model_provider: str,
         model_name: str,
         model_revision: str | None,
+        mode_requested: str,
+        mode_used: str,
+        fallback_used: bool,
+        fallback_reason: str | None,
         retrieval_mode: str,
     ) -> Review:
         review.status = "completed"
@@ -96,6 +102,10 @@ class ReviewRepository:
         review.model_provider = model_provider
         review.model_name = model_name
         review.model_revision = model_revision
+        review.mode_requested = mode_requested
+        review.mode_used = mode_used
+        review.fallback_used = fallback_used
+        review.fallback_reason = fallback_reason
         review.retrieval_mode = retrieval_mode
         review.upload_temp_path = None
         for clause in clauses:
@@ -133,3 +143,50 @@ class ReviewRepository:
     async def delete(self, review: Review) -> None:
         await self._session.delete(review)
         await self._session.commit()
+
+    async def list_summaries(
+        self, *, limit: int, offset: int, settings: Settings
+    ) -> list[tuple[Review, int, int, int]]:
+        """P8.1 dashboard/history page: (review, findings_total,
+        missing_clause_count, needs_review_count) per row, ordered by
+        created_at desc. Expired terminal reviews encountered on this page
+        are deleted (same lazy delete-on-read behavior as GET /{review_id})
+        and excluded from the result — so a returned page may contain fewer
+        than `limit` items when expired rows were purged."""
+        page_stmt = select(Review).order_by(Review.created_at.desc()).limit(limit).offset(offset)
+        page_result = await self._session.execute(page_stmt)
+        reviews = list(page_result.scalars().all())
+
+        surviving: list[Review] = []
+        for review in reviews:
+            if is_expired(review, settings):
+                await self._session.delete(review)
+            else:
+                surviving.append(review)
+        if len(surviving) != len(reviews):
+            await self._session.commit()
+
+        if not surviving:
+            return []
+
+        review_ids = [review.id for review in surviving]
+        agg_stmt = (
+            select(
+                Finding.review_id,
+                func.count(Finding.id).label("findings_total"),
+                func.sum(case((Finding.finding_type == "missing_clause", 1), else_=0)).label("missing_clause_count"),
+                func.sum(case((Finding.needs_review.is_(True), 1), else_=0)).label("needs_review_count"),
+            )
+            .where(Finding.review_id.in_(review_ids))
+            .group_by(Finding.review_id)
+        )
+        agg_result = await self._session.execute(agg_stmt)
+        aggregates = {
+            row.review_id: (row.findings_total, int(row.missing_clause_count), int(row.needs_review_count))
+            for row in agg_result
+        }
+
+        return [
+            (review, *aggregates.get(review.id, (0, 0, 0)))
+            for review in surviving
+        ]

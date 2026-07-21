@@ -3,7 +3,7 @@
 Prototype intranet portal for structured, non-chat Legal contract risk review. Start with
 [docs/MASTER_INDEX.md](./docs/MASTER_INDEX.md) for the full specification pack.
 
-## Current Phase: P7 Hosted Demo and Polish (complete)
+## Current Phase: P9 Case-Study Alignment (complete)
 
 **Hosted demo URL:** `TBD` — packaging is complete, accepted, and verified locally (see
 below). Going live on Render is **explicitly deferred to a later polish/optimization
@@ -12,24 +12,20 @@ demo convenience only** — it is not the target production architecture. The pr
 deployment target is fully on-premises (Docker-based Ollama/Qdrant, no cloud calls); see
 `docs/ARCHITECTURE_DECISIONS.md` ADR-012.
 
-P0-P7 are complete. P3 adds real, general (not fixture-tuned) clause classification and
+P0-P9 are complete. P3 adds real, general (not fixture-tuned) clause classification and
 attribute extraction via a provider-neutral model adapter (`backend/app/model_adapter/`,
 only Ollama implemented) orchestrated with a lazily-built Haystack `AsyncPipeline`
 (`backend/app/services/haystack_pipeline.py`). The deterministic rule engine
 (`backend/app/services/rule_engine.py`) remains the unchanged, sole source of truth for risk
-decisions regardless of which extraction path fed it. `clause_intelligence_mode` defaults to
-`deterministic` everywhere, including Docker Compose; model mode is strictly opt-in via
-`PART2_CLAUSE_INTELLIGENCE_MODE=model` plus `docker compose --profile local-model up`. The
-PoC validation model is Docker-hosted Ollama with `qwen3:4b` so the demo proves the workflow
-without requiring a heavy local model; stronger local models can be tested later if quality
-is insufficient. P3 is live-verified: 3 runs plus 1 egress-blocked run of the golden fixture
-against real Docker Ollama + `qwen3:4b` produced identical rule IDs, severities, missing
-clauses, overall risk, and confidence values — see `docs/IMPLEMENTATION_PHASE_PLAN.md` P3
-Live Verification Notes and `docs/TEST_AND_ACCEPTANCE_PLAN.md` Repeatability Tests. Note:
-`qwen3:4b` did not classify some clause types present in the fixture text (a disclosed
-model-quality limitation, see `docs/RISK_REGISTER.md` R-03), and the live-model results
-diverge from P2's deterministic fixture-tuned numbers by design — these are two different,
-independently correct extraction paths feeding the same unchanged rule engine.
+decisions regardless of which extraction path fed it. Local Docker Compose defaults to
+model-assisted review against the shared on-prem Ollama VM (`http://<ollama-vm-ip>:11434`,
+`qwen3.6:35b`), so the demo visibly exercises a local-network model without running a heavy
+model on this laptop. Deterministic rule review remains the disclosed rules-only fallback
+when the VM/model path is unavailable. P3 was originally live-verified against Docker
+Ollama + `qwen3:4b`; the current demo runtime now uses the stronger shared VM model because
+the laptop-local model path was too slow for repeated browser demos. If the model path is
+unavailable, the review completes through rules-only fallback and
+clearly discloses that in API provenance and the result UI.
 
 P4 adds supplemental guidance retrieval: every finding can carry a `guidance` list of
 illustrative negotiation tips, approved-example language, or playbook cross-references,
@@ -44,10 +40,33 @@ is unreachable — verified live: a direct diff of retrieval-on vs retrieval-off
 for the same golden-fixture document showed identical rule IDs, severities, missing clauses,
 and overall risk. See `docs/IMPLEMENTATION_PHASE_PLAN.md` P4 Completion Notes.
 
+P8 completes product/demo polish without changing rule, model, retrieval, hosting, or
+PDF/export behavior. The app now has a real Dashboard at `/`, a navy/gold brand shell and
+favicon, a richer `/review/new` upload screen with active-playbook and workflow context, a
+scannable findings screen with severity grouping and a separate missing-clause section, and
+an enterprise-style `/admin/model` runtime-provider configuration screen that keeps Ollama as
+the only enabled provider while Anthropic/OpenAI/Gemini remain disabled placeholders. P8.8
+adds `/admin/playbook`, a read-only active-playbook viewer showing 8 required clause
+families, severity coverage, missing-clause mappings, and all 27 rules. Latest validation:
+backend tests 164/164, frontend tests 38/38, frontend build clean, Docker backend/frontend
+healthy on 8420/5420, and a live fixture upload completed with `overall_risk: Critical`, 7
+findings, and 1 missing clause. See `docs/P8_UI_UX_POLISH_PLAN.md` and
+`docs/IMPLEMENTATION_PHASE_PLAN.md` P8.1-P8.8 notes.
+
+P9 closes the remaining Part 2 case-study alignment gaps before deployment: `/architecture`
+explains the local tech stack and secure data flow inside the portal; each finding can show
+`Suggested approved clause language` from deterministic approved templates keyed by rule ID;
+dashboard and review-result screens now make Qdrant supplemental-guidance status visible
+without exposing raw enum values. This does not change rule logic, risk scoring, model
+adapter behavior, or retrieval behavior. Latest validation after P9/final cleanup: backend
+tests 164/164, frontend tests 38/38, frontend build clean, Docker backend/frontend healthy
+on 8420/5420, and a live fixture upload completed with model mode, no fallback, Critical risk, and
+approved-template draft support on all returned findings/missing-clause items.
+
 **Schema-change note:** P4 added `Finding.guidance_json`. There is no migration tooling in
 this prototype — if you have an existing local SQLite volume from before P4, run
 `docker compose down -v` before bringing the stack back up, or the backend will fail against
-the stale schema. P5, P6, and P7 made no schema changes.
+the stale schema. P5, P6, P7, and P8 made no schema changes.
 
 P5 makes `/admin/model` a real editable config screen instead of a read-only display:
 provider select, model name, Ollama base URL, a write-only credential field, Save, and Test
@@ -157,26 +176,28 @@ can't collide with other locally running Compose projects (e.g. `ai-boardroom-*`
 `omniflow-*`). `backend` and `frontend` run with `restart: unless-stopped`, so once started
 they come back automatically if Docker restarts (e.g. after a host reboot), without needing
 `docker compose up` to be re-run manually — `docker compose down` still stops and removes
-them normally. `ollama` and `qdrant` remain opt-in only, with no restart policy, so enabling
-either profile once doesn't cause a multi-GB model container to silently reappear on every
-reboot.
+them normally. `ollama` and `qdrant` remain opt-in only; neither local model runtime nor
+retrieval infrastructure starts unless its profile is requested.
 
-### Optional local model verification
-Use Docker-based Ollama for the PoC so the model runtime is isolated and removable:
+### Model-assisted verification
+By default the app uses the shared on-prem Ollama VM:
+```
+OLLAMA_BASE_URL=http://<ollama-vm-ip>:11434 MODEL_NAME=qwen3.6:35b docker compose up -d --build backend
+```
+
+Optional laptop-local fallback only, if the VM is unavailable:
 ```
 docker compose --profile local-model up -d ollama
-docker compose exec ollama ollama pull qwen3:4b
-CLAUSE_INTELLIGENCE_MODE=model MODEL_NAME=qwen3:4b docker compose up -d --build backend
+docker compose exec ollama ollama pull <model>
+OLLAMA_BASE_URL=http://ollama:11434 MODEL_NAME=<model> docker compose up -d --build backend
 ```
-Remove the PoC model/runtime later with `docker compose down -v` if you no longer need it.
 
 ### Optional supplemental-guidance retrieval
 
-Use Docker-based Qdrant plus a local embedding model for the PoC — independent of the
-`local-model` profile above (either can run without the other; both share the `ollama`
-container when both are enabled):
+Use Docker-based Qdrant plus a local embedding model for the PoC. Qdrant remains opt-in;
+Ollama is already part of the default local stack:
 ```
-docker compose --profile retrieval up -d ollama qdrant
+docker compose --profile retrieval up -d qdrant
 docker compose exec ollama ollama pull qllama/multilingual-e5-small
 docker compose exec backend python scripts/index_guidance.py
 docker compose up -d --build backend

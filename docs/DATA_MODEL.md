@@ -16,6 +16,9 @@
 - `pipeline_version`, `playbook_version`, `prompt_version`
 - `model_provider`, `model_name`, `model_revision`: `"rule-engine"`/`"none"`/`null` in
   deterministic mode; the configured Ollama provider/model in model mode (P3)
+- `mode_requested`, `mode_used`, `fallback_used`, `fallback_reason`: model-vs-rules
+  provenance added after P8 so a model-unavailable review cannot be confused with
+  AI-assisted output
 - `deployment_mode`
 - `retrieval_mode`: `qdrant | degraded_full_rules` — real as of P4 (was always
   `degraded_full_rules` before retrieval was implemented); reflects whether Qdrant/the

@@ -29,18 +29,56 @@ export function ReviewNew() {
 
   return (
     <div className="page review-new">
-      <h1>Start a contract review</h1>
-      <ol className="workflow-steps">
-        <li>Upload a PDF or DOCX contract.</li>
-        <li>The system reviews it against the active playbook.</li>
-        <li>Review structured findings and recommended actions.</li>
+      <h1>New Legal Review</h1>
+      <p className="lede">
+        Upload one contract. It is parsed and evaluated on this server against the Defense
+        Services playbook, then returned as structured, evidence-linked findings.
+      </p>
+
+      <div className="playbook-card" role="region" aria-label="Active playbook summary">
+        <h2>Active playbook</h2>
+        <dl>
+          <div>
+            <dt>Playbook</dt>
+            <dd>{PLAYBOOK_ID}</dd>
+          </div>
+          <div>
+            <dt>Version</dt>
+            <dd>1.0-draft</dd>
+          </div>
+          <div>
+            <dt>Rules</dt>
+            <dd>27</dd>
+          </div>
+        </dl>
+        <p className="playbook-card-label">Checks for required clauses covering:</p>
+        <ul className="playbook-clause-list">
+          <li>Confidentiality</li>
+          <li>Data handling</li>
+          <li>Subcontracting</li>
+          <li>Audit and inspection</li>
+          <li>Intellectual property</li>
+          <li>Liability and indemnity</li>
+          <li>Termination and exit</li>
+          <li>Security incident response</li>
+        </ul>
+        <p className="playbook-card-label">Produces:</p>
+        <p>Clause deviation flags, missing-clause findings, risk labels, cited evidence, and recommended actions.</p>
+      </div>
+
+      <ol className="workflow-steps workflow-strip">
+        <li>Upload</li>
+        <li>Parse</li>
+        <li>Extract clauses</li>
+        <li>Apply playbook</li>
+        <li>Structured findings</li>
       </ol>
-      <UploadForm
-        playbookId={PLAYBOOK_ID}
-        onSubmit={handleSubmit}
-        submitting={submitting}
-        errorMessage={errorMessage}
-      />
+
+      <p className="hint trust-note">
+        Processed on this server and never sent to a public AI service.
+      </p>
+
+      <UploadForm onSubmit={handleSubmit} submitting={submitting} errorMessage={errorMessage} />
     </div>
   );
 }

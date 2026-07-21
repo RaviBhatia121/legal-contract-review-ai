@@ -116,6 +116,24 @@ async def test_repair_succeeds_on_second_attempt(mock_server):
     assert _Handler.call_count == 2
 
 
+async def test_extracts_json_after_qwen_thinking_block(mock_server):
+    port = mock_server.server_address[1]
+    _Handler.responses = [
+        {
+            "model": "test-model",
+            "message": {
+                "role": "assistant",
+                "content": '<think>private reasoning</think>\n\n{"clauses": []}',
+            },
+            "done": True,
+        }
+    ]
+    adapter = OllamaAdapter(base_url=f"http://127.0.0.1:{port}", model_name="test-model")
+    result = await adapter.classify_blocks([TextBlock("b0", "text", 1, 1)], ["data_handling"])
+    assert result == []
+    assert _Handler.call_count == 1
+
+
 async def test_repair_fails_twice_raises_model_output_invalid(mock_server):
     port = mock_server.server_address[1]
     _Handler.responses = [

@@ -111,9 +111,13 @@ async def test_golden_path_upload_to_findings(client):
 
     by_rule_id = {f["rule_id"]: f for f in all_findings}
     assert by_rule_id["DATA-001"]["section_reference"] == "Section 6.2"
+    assert by_rule_id["DATA-001"]["suggested_draft_clause"]["source"] == "approved_template"
+    assert "client-controlled environments" in by_rule_id["DATA-001"]["suggested_draft_clause"]["text"]
+    assert "legal approval required" in by_rule_id["DATA-001"]["suggested_draft_clause"]["approval_note"].lower()
     assert by_rule_id["CONF-002"]["section_reference"] == "Section 9.3"
     assert by_rule_id["AUD-001"]["finding_type"] == "missing_clause"
     assert by_rule_id["AUD-001"]["evidence_text"] is None
+    assert by_rule_id["AUD-001"]["suggested_draft_clause"]["source"] == "approved_template"
 
     for finding in result["findings"]:
         if finding["finding_type"] in ("deviation", "compliant", "needs_review"):
@@ -124,6 +128,10 @@ async def test_golden_path_upload_to_findings(client):
 
     assert result["provenance"]["deployment_mode"] == "local"
     assert result["provenance"]["parser_name"] == "pypdf+python-docx"
+    assert result["provenance"]["mode_requested"] == "deterministic"
+    assert result["provenance"]["mode_used"] == "deterministic"
+    assert result["provenance"]["fallback_used"] is False
+    assert result["provenance"]["fallback_reason"] is None
 
     # P4: no Qdrant reachable in the test environment — retrieval degrades
     # cleanly rather than failing the review, and every finding still has a
@@ -138,6 +146,33 @@ async def test_golden_path_upload_to_findings(client):
 
     after_delete = await client.get(f"/api/v1/reviews/{review_id}")
     assert after_delete.status_code == 404
+
+
+async def test_model_mode_provider_unavailable_completes_with_disclosed_fallback(client, monkeypatch):
+    from app.core.config import Settings
+    from app.core import job_runner
+
+    monkeypatch.setattr(
+        job_runner,
+        "get_settings",
+        lambda: Settings(
+            clause_intelligence_mode="model",
+            ollama_base_url="http://127.0.0.1:9",
+            ollama_timeout_s=0.1,
+        ),
+    )
+
+    created = await _create_review(client)
+    result = await _wait_for_completion(client, created["review_id"], timeout_s=8.0)
+
+    assert result["status"] == "completed"
+    assert result["review_summary"]["overall_risk"] == "Critical"
+    assert result["provenance"]["mode_requested"] == "model"
+    assert result["provenance"]["mode_used"] == "deterministic"
+    assert result["provenance"]["fallback_used"] is True
+    assert result["provenance"]["fallback_reason"] == "PipelineRuntimeError"
+    assert result["provenance"]["model_provider"] == "rule-engine"
+    assert all(f["source"] == "rule" for f in result["findings"] + result["missing_clauses"])
 
 
 async def test_golden_path_docx_upload(client):

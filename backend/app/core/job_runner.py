@@ -5,6 +5,7 @@ import logging
 import os
 from typing import Callable
 
+from haystack.core.errors import PipelineRuntimeError
 from sqlalchemy import select
 
 from app.api import errors
@@ -15,7 +16,13 @@ from app.db.session import async_session_factory
 from app.model_adapter.errors import ModelOutputInvalidError, ModelTimeoutError, ProviderUnavailableError
 from app.playbook.loader import Playbook, load_playbook
 from app.services import applicability
-from app.services.clause_intelligence import DETERMINISTIC_SOURCE, MODEL_ASSISTED_SOURCE, ClauseIntelligenceService
+from app.services.clause_intelligence import (
+    DETERMINISTIC_MODE,
+    DETERMINISTIC_SOURCE,
+    MODEL_ASSISTED_SOURCE,
+    MODEL_MODE,
+    ClauseIntelligenceService,
+)
 from app.services.guidance_retrieval import DEGRADED_MODE, GuidanceService
 from app.services.parsing import (
     PARSER_NAME,
@@ -65,6 +72,7 @@ _MODEL_ADAPTER_ERROR_MAP: dict[type[Exception], Callable[[], errors.ApiError]] =
     ModelOutputInvalidError: errors.model_output_invalid,
     ProviderUnavailableError: errors.provider_unavailable,
 }
+_MODEL_EXECUTION_ERRORS = (*_MODEL_ADAPTER_ERROR_MAP.keys(), PipelineRuntimeError)
 
 
 async def run_review_job(review_id: str) -> None:
@@ -117,12 +125,25 @@ async def run_review_job(review_id: str) -> None:
                 review = await repo.update_status(
                     review, status="analyzing", current_stage="classifying_clauses"
                 )
+                mode_requested = settings.clause_intelligence_mode
+                fallback_used = False
+                fallback_reason = None
                 try:
                     clause_inputs, mode_used = await intelligence.get_clause_inputs(parsed, playbook)
-                except tuple(_MODEL_ADAPTER_ERROR_MAP) as exc:
-                    error_builder = _MODEL_ADAPTER_ERROR_MAP[type(exc)]
-                    await repo.mark_failed(review, **_error_kwargs(error_builder()))
-                    return
+                except _MODEL_EXECUTION_ERRORS as exc:
+                    if mode_requested != MODEL_MODE:
+                        error_builder = _MODEL_ADAPTER_ERROR_MAP.get(type(exc), errors.provider_unavailable)
+                        await repo.mark_failed(review, **_error_kwargs(error_builder()))
+                        return
+                    fallback_used = True
+                    fallback_reason = type(exc).__name__
+                    logger.warning(
+                        "job_runner: review %s model path unavailable (%s); using deterministic fallback",
+                        review_id,
+                        fallback_reason,
+                    )
+                    clause_inputs = _deterministic_fallback_inputs(parsed)
+                    mode_used = DETERMINISTIC_MODE
 
                 # Real applicability check, using classification output —
                 # source-agnostic, so it runs the same way whether
@@ -160,6 +181,10 @@ async def run_review_job(review_id: str) -> None:
                     model_provider=model_provider,
                     model_name=model_name,
                     model_revision=_RULE_ENGINE_MODEL_REVISION,
+                    mode_requested=mode_requested,
+                    mode_used=mode_used,
+                    fallback_used=fallback_used,
+                    fallback_reason=fallback_reason,
                     retrieval_mode=retrieval_mode,
                 )
             except Exception as exc:
@@ -186,6 +211,12 @@ def _error_kwargs(api_error) -> dict:
         "message": api_error.detail["error"]["message"],
         "retryable": api_error.retryable,
     }
+
+
+def _deterministic_fallback_inputs(parsed):
+    from app.services.rule_engine import build_deterministic_clause_inputs
+
+    return build_deterministic_clause_inputs(parsed)
 
 
 def _to_orm_rows(

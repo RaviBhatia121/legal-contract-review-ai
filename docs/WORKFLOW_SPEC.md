@@ -1,7 +1,7 @@
 # Part 2 Workflow Specification
 
 ## Workflow
-`upload -> validate -> parse -> check reviewable text -> segment/classify -> check applicability -> load rules/retrieve guidance -> extract attributes -> evaluate all applicable rules -> validate -> persist -> render`
+`upload -> validate -> parse -> check reviewable text -> segment/classify -> check applicability -> load rules/retrieve guidance -> extract attributes -> evaluate all applicable rules -> attach approved-template drafting support -> validate -> persist -> render`
 
 This is a fixed application pipeline, not an autonomous agent loop.
 
@@ -59,12 +59,12 @@ Failure: persist a typed failed result and delete temporary artifacts; do not co
 - Set `current_stage` to `classifying_clauses`.
 - Produce `ClauseInput`s (`backend/app/services/rule_engine.py`) via one of two
   interchangeable paths, selected by `Settings.clause_intelligence_mode`
-  (default `"deterministic"` everywhere):
+  (code default `"deterministic"`; local Docker Compose default `"model"`):
   - **Deterministic (default/fallback/test-double):** `backend/app/services/segmentation.py`
     performs fixture-oriented heading/sub-clause segmentation over `Review.parsed_text` — it
     recognizes one known synthetic contract's "Section N. Title" / "N.M" numbering
     convention, not general contract structure.
-  - **Model-assisted (P3, opt-in via `PART2_CLAUSE_INTELLIGENCE_MODE=model`):**
+  - **Model-assisted (P3, default in local Docker Compose):**
     `backend/app/services/clause_intelligence.py` runs a Haystack pipeline
     (`haystack_pipeline.py`) over a general, non-fixture-tuned block splitter
     (`block_splitter.py`) and the Ollama adapter (`model_adapter/ollama_adapter.py`),
@@ -77,11 +77,15 @@ Failure: persist a typed failed result and delete temporary artifacts; do not co
   when fewer than 2 required clause types were classified at or above the confidence floor
   (`backend/app/services/applicability.is_applicable`). This runs identically regardless of
   which path produced the `ClauseInput`s — see the P3 workflow-order correction above.
-- On `ModelTimeoutError`/`ModelOutputInvalidError`/`ProviderUnavailableError` from the model
-  path: typed failure (`MODEL_TIMEOUT`/`MODEL_OUTPUT_INVALID`/`PROVIDER_UNAVAILABLE`), no
-  partial success persisted.
+- On model-path execution failure (`ModelTimeoutError`, `ModelOutputInvalidError`,
+  `ProviderUnavailableError`, or Haystack `PipelineRuntimeError` wrapping one of those
+  provider failures), the review falls back to deterministic clause inputs, completes through
+  the same rule engine, and persists provenance with `mode_requested: "model"`,
+  `mode_used: "deterministic"`, `fallback_used: true`, and `fallback_reason`.
 
-Failure: persist a typed failed result and delete temporary artifacts; do not continue to rule evaluation.
+Failure: persist a typed failed result only for non-fallback errors (for example parsing,
+unsupported document/applicability, or unexpected internal failure) and delete temporary
+artifacts.
 
 ### 5. Load Rules
 - Set `current_stage` to `checking_playbook`.
@@ -135,7 +139,16 @@ Failure: persist a typed failed result and delete temporary artifacts; do not co
 - Calculate counts and overall risk deterministically.
 - Allow one structured-output repair attempt before failing.
 
-### 9. Persist and Clean Up
+### 9. Approved-Template Drafting Support
+- P9.2 maps each triggered `rule_id` to approved local template language in
+  `backend/app/services/drafting.py`.
+- This stage runs after deterministic rule evaluation, so it cannot change applicability,
+  rule IDs, severity, missing-clause detection, or overall risk.
+- The API returns this as `suggested_draft_clause` with the disclaimer
+  `Drafting support only; legal approval required before use.`
+- This is not free-form generation, redlining, negotiation, or a chat prompt.
+
+### 10. Persist and Clean Up
 - Store immutable review metadata, findings, retrieved guidance, and provenance in SQLite.
 - Delete the uploaded original immediately after processing in hosted Demo mode.
 - **P4 correction:** the original plan anticipated per-review vectors in Qdrant that would
@@ -146,7 +159,7 @@ Failure: persist a typed failed result and delete temporary artifacts; do not co
   any other finding field; there is nothing Qdrant-side to remove per review. This is a
   stronger data-boundary than originally planned, not a gap.
 
-### 10. Render
+### 11. Render
 - Set status `completed` only after persistence succeeds.
 - Show summary, findings, evidence, rules, recommendations, and provenance.
 - Collapse Low/compliant items by default.

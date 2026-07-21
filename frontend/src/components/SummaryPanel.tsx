@@ -14,6 +14,12 @@ function retrievalLabel(provenance: Provenance): string {
 }
 
 export function SummaryPanel({ document, summary, provenance }: Props) {
+  const modeLabel = provenance.fallback_used
+    ? "Rules only"
+    : provenance.mode_used === "model"
+      ? `AI-assisted review using ${provenance.model_provider} (${provenance.model_name})`
+      : "Rules only";
+
   return (
     <section className="summary-panel" aria-label="Review summary">
       <div className="summary-header">
@@ -22,6 +28,9 @@ export function SummaryPanel({ document, summary, provenance }: Props) {
           Overall risk: {summary.overall_risk}
         </span>
       </div>
+      <p className={`mode-status ${provenance.fallback_used ? "mode-fallback" : `mode-${provenance.mode_used}`}`}>
+        {modeLabel}
+      </p>
       <p className={`retrieval-status retrieval-${provenance.retrieval_mode}`}>{retrievalLabel(provenance)}</p>
       <dl className="summary-meta">
         <div>
@@ -41,11 +50,16 @@ export function SummaryPanel({ document, summary, provenance }: Props) {
           <dd>{summary.clauses_reviewed}</dd>
         </div>
       </dl>
-      <ul className="summary-counts">
-        <li>Critical: {summary.findings_by_risk.Critical}</li>
-        <li>High: {summary.findings_by_risk.High}</li>
-        <li>Medium: {summary.findings_by_risk.Medium}</li>
-        <li>Low: {summary.findings_by_risk.Low}</li>
+      <div className="summary-stats-group">
+        <h3 className="summary-stats-label">Findings by severity</h3>
+        <ul className="summary-counts">
+          <li>Critical: {summary.findings_by_risk.Critical}</li>
+          <li>High: {summary.findings_by_risk.High}</li>
+          <li>Medium: {summary.findings_by_risk.Medium}</li>
+          <li>Low: {summary.findings_by_risk.Low}</li>
+        </ul>
+      </div>
+      <ul className="summary-counts summary-counts-callout">
         <li>Missing clauses: {summary.missing_clause_count}</li>
         <li>Needs review: {summary.needs_review_count}</li>
       </ul>

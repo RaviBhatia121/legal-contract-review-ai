@@ -126,6 +126,14 @@ of the 24-hour retention logic above. This is a disclosed demo-only exception (s
 `docs/OPEN_DECISIONS.md` D-07 and `docs/SECURITY_EVIDENCE.md` section 10), not how the
 production on-prem target persists data.
 
+**P8.1 dashboard/history note:** the retention check moved from a `routes_reviews.py`-local
+helper into `app/services/retention.py` so `GET /api/v1/reviews` (dashboard/history) and
+`GET /api/v1/reviews/{review_id}` enforce identical lazy delete-on-read behavior — same
+windows, same "in-progress reviews never expire" rule, no new policy. The list endpoint
+deletes any expired terminal review it encounters on a page and excludes it from the
+response, so a dashboard/history view never surfaces a review past its retention window,
+and a returned page may contain fewer than the requested `limit` when this happens.
+
 ## Security Evidence Required Before Deployment
 - dependency and container vulnerability scan (not done — still open, out of P7 scope)
 - license report and SBOM (not done — still open, out of P7 scope)

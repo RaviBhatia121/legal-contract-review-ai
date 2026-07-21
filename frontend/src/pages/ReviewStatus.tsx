@@ -99,8 +99,37 @@ export function ReviewStatus() {
 
   return (
     <div className="page review-findings">
+      <h1>Review result</h1>
+      <p className="findings-disclaimer">
+        Findings are decision support only, not legal advice. Final risk labels are assigned
+        by the deterministic playbook rule engine. Supplemental guidance, when shown, is
+        illustrative context only and does not change any finding's risk label.
+      </p>
+      {result.provenance?.fallback_used && (
+        <section className="fallback-disclaimer" aria-label="AI model fallback notice" role="status">
+          <strong>Local AI model unavailable.</strong> This review used deterministic playbook rules only. No model-assisted
+          clause classification was applied.
+        </section>
+      )}
       {result.document && result.review_summary && result.provenance && (
-        <SummaryPanel document={result.document} summary={result.review_summary} provenance={result.provenance} />
+        <>
+          <SummaryPanel document={result.document} summary={result.review_summary} provenance={result.provenance} />
+          <section
+            className={`guidance-status-card guidance-status-${result.provenance.retrieval_mode}`}
+            aria-label="Supplemental guidance status"
+          >
+            <h2>
+              {result.provenance.retrieval_mode === "qdrant"
+                ? "Qdrant supplemental guidance active"
+                : "Qdrant guidance unavailable"}
+            </h2>
+            <p>
+              {result.provenance.retrieval_mode === "qdrant"
+                ? "Related playbook guidance was retrieved after rule evaluation. It supports reviewer context only and cannot change risk labels."
+                : "The review completed with deterministic playbook rules only. Risk labels, rule IDs, and missing-clause output are unaffected."}
+            </p>
+          </section>
+        </>
       )}
       <FindingsList findings={result.findings ?? []} missingClauses={result.missing_clauses ?? []} />
     </div>

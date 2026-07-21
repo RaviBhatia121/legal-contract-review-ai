@@ -2,8 +2,10 @@ import type {
   ApiError,
   ConfigTestResult,
   ConfigUpdateRequest,
+  Playbook,
   ProviderInfo,
   ReviewCreated,
+  ReviewListOut,
   ReviewResult,
   RuntimeConfig,
 } from "./types";
@@ -55,6 +57,15 @@ export async function getReview(reviewId: string): Promise<ReviewResult> {
   return handleResponse<ReviewResult>(response);
 }
 
+export async function listReviews(params?: { limit?: number; offset?: number }): Promise<ReviewListOut> {
+  const search = new URLSearchParams();
+  if (params?.limit !== undefined) search.set("limit", String(params.limit));
+  if (params?.offset !== undefined) search.set("offset", String(params.offset));
+  const query = search.toString();
+  const response = await fetch(`${API_BASE}/reviews${query ? `?${query}` : ""}`);
+  return handleResponse<ReviewListOut>(response);
+}
+
 export async function getConfig(): Promise<RuntimeConfig> {
   const response = await fetch(`${API_BASE}/config`);
   return handleResponse<RuntimeConfig>(response);
@@ -77,4 +88,9 @@ export async function updateConfig(update: ConfigUpdateRequest): Promise<Runtime
 export async function testConfig(): Promise<ConfigTestResult> {
   const response = await fetch(`${API_BASE}/config/test`, { method: "POST" });
   return handleResponse<ConfigTestResult>(response);
+}
+
+export async function getActivePlaybook(): Promise<Playbook> {
+  const response = await fetch(`${API_BASE}/playbooks/active`);
+  return handleResponse<Playbook>(response);
 }

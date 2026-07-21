@@ -34,9 +34,13 @@ export function FindingsList({ findings, missingClauses }: Props) {
     return true;
   });
 
+  const visibleDeviations = visible.filter((f) => f.finding_type !== "missing_clause");
+  const visibleMissingClauses = visible.filter((f) => f.finding_type === "missing_clause");
+
   return (
     <section className="findings-list" aria-label="Findings">
       <div className="filters">
+        <h2 className="filters-heading">Filters</h2>
         <fieldset>
           <legend>Severity</legend>
           {ALL_RISKS.map((risk) => (
@@ -76,11 +80,37 @@ export function FindingsList({ findings, missingClauses }: Props) {
       {visible.length === 0 ? (
         <p className="no-findings">No findings match the current filters.</p>
       ) : (
-        <div className="finding-cards">
-          {visible.map((finding) => (
-            <FindingCard key={finding.finding_id} finding={finding} />
-          ))}
-        </div>
+        <>
+          {ALL_RISKS.map((risk) => {
+            const group = visibleDeviations.filter((f) => f.risk_label === risk);
+            if (group.length === 0) return null;
+            return (
+              <div key={risk} className="severity-group" aria-label={`${risk} severity findings`}>
+                <h2 className="severity-group-heading">
+                  {risk} <span className="severity-group-count">({group.length})</span>
+                </h2>
+                <div className="finding-cards">
+                  {group.map((finding) => (
+                    <FindingCard key={finding.finding_id} finding={finding} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          {visibleMissingClauses.length > 0 && (
+            <div className="missing-clauses-section" aria-label="Missing clauses">
+              <h2 className="severity-group-heading">
+                Missing clauses <span className="severity-group-count">({visibleMissingClauses.length})</span>
+              </h2>
+              <div className="finding-cards">
+                {visibleMissingClauses.map((finding) => (
+                  <FindingCard key={finding.finding_id} finding={finding} />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </section>
   );

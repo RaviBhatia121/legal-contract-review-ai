@@ -101,5 +101,87 @@ the deploy action itself and its downstream evidence are deferred.
 - [ ] Complete architecture walkthrough. (Docs are reconciled per `CHANGE_CONTROL.md`; a
   live spoken/recorded walkthrough is a presentation-time activity, not a repo artifact.)
 
+## P8: UI/UX and Demo Polish — complete
+- [x] Add `GET /api/v1/reviews` summary-list endpoint and repository list method. Respects
+  existing local/demo retention policy (shared `app/services/retention.py` helper, extracted
+  from `routes_reviews.py` with no behavior change) and never returns evidence text, full
+  findings, prompts, credentials, or uploaded document text — verified by `backend/tests/
+  test_reviews_list.py::test_payload_excludes_evidence_and_full_findings`. Expired terminal
+  reviews encountered on a page are deleted, same lazy delete-on-read policy as
+  `GET /reviews/{id}`; a returned page may contain fewer than `limit` items when this
+  happens (documented in `API_CONTRACT.md`).
+- [x] Derive list-item aggregate counts (`findings_total`, `missing_clause_count`,
+  `needs_review_count`) with a single aggregate query per list call, not per-row N+1
+  queries (`ReviewRepository.list_summaries()`: one page query + one grouped aggregate
+  query against `Finding`, regardless of page size up to `limit=50`).
+- [x] Replace default/plain branding: favicon, title, navigation shell, navy/gold product
+  visual direction aligned with the Part 1/Part 3 case-study artifacts. New document/
+  checkmark favicon (was an unrelated default scaffold mark); unused `frontend/public/
+  icons.svg` deleted; `--navy`/`--gold` CSS variables added (risk/demo-warning colors
+  unchanged); `:focus-visible` added; header/footer/mobile-nav polish. Nav intentionally
+  still reads `New review` + conditional `Admin` only — no `Dashboard` link yet, since that
+  route is P8.3's.
+- [x] Add Dashboard/Home route using real SQLite-backed metrics and recent reviews; no fake
+  ROI/time-saved/risk-reduction metrics. `/` now renders `Dashboard.tsx` (was a redirect to
+  `/review/new`); `Dashboard` added as the first nav item, visible in both local and demo
+  mode (unlike `Admin`). Metrics are computed live from `GET /api/v1/reviews?limit=50`:
+  reviews-shown count (always phrased "up to 50 most recently retained," never "Total"/"All
+  reviews"), completed/in-progress/failed counts, risk distribution and retrieval-mode
+  split (both completed-only), and a recent-reviews table. No summed "findings caught"
+  headline stat either — deliberately excluded to avoid implied-value framing. No backend
+  changes were needed.
+- [x] Enhance New Review screen with Defense Services Playbook explanation, local/on-prem
+  processing note, accepted file limits, and visible decision-support disclaimer.
+  `ReviewNew.tsx` now shows a page-level "Active playbook" summary card (id, version, 27
+  rules, the 8 required clause families, and a "Produces:" output list), a 5-stage
+  workflow strip, and a hosting-neutral trust note ("Processed on this server and never sent
+  to a public AI service") — deliberately avoiding "on-premises"/"on-prem"/"air-gapped"
+  wording since the same screen can run in hosted Demo mode. The legal disclaimer stays in
+  the global footer (not duplicated). Upload mechanics unchanged; no demo-mode
+  acknowledgement checkbox added (existing global demo banner already covers it).
+- [x] Enhance Findings screen with stronger severity hierarchy, quote-style evidence,
+  rule-ID tags, supplemental guidance presentation, missing-clause distinction, filters,
+  and provenance panel. `ReviewStatus.tsx` now shows a `Review result` heading and a
+  compliance banner (decision-support/not-legal-advice, rule-engine-sourced risk, guidance
+  doesn't affect risk scoring); `SummaryPanel` groups severity counts and sets missing
+  clauses/needs-review apart; `FindingsList` renders its existing filtered set grouped by
+  severity subheadings with missing clauses broken into their own section; `FindingCard`
+  adds Evidence/Why this is flagged/Recommended action field labels and a visually distinct
+  guidance-panel container. Filters, polling, routes, rule IDs, evidence/recommendation
+  text, and guidance copy are all unchanged; no field was hidden or lost.
+- [x] Restyle Admin Model screen to show Ollama as enabled/configurable and
+  Anthropic/OpenAI/Gemini as disabled/not enabled without implying implemented cloud
+  adapters. `AdminModel.tsx` now has posture cards, current-config summary, provider catalog
+  cards, runtime settings, security notes, and a connection-test panel. Existing config API
+  calls and save/test behavior are unchanged; credentials remain write-only; D-05 remains
+  explicitly open.
+- [x] Add read-only Admin Playbook viewer. `GET /api/v1/playbooks/active` and
+  `/admin/playbook` show the active playbook/version, 8 required clause families, severity
+  coverage, missing-clause mappings, and all 27 rules. CRUD is intentionally not implemented
+  because playbook edits require versioning, validation, audit trail, rollback, and explicit
+  approval.
+- [x] Update `UI_SPEC.md`, `API_CONTRACT.md`, `OUTPUT_SCHEMA.md` if needed,
+  `TEST_AND_ACCEPTANCE_PLAN.md`, `PLAN.md`, `AGENT_HANDOFF.md`,
+  `IMPLEMENTATION_PHASE_PLAN.md`, `IMPLEMENTATION_BACKLOG.md`, and
+  `P8_UI_UX_POLISH_PLAN.md` as implementation progresses.
+- [x] Validate P8 with backend tests, frontend tests, frontend build, Docker health, and one
+  live upload-to-findings smoke test before marking complete. Final P8.7 evidence: backend
+  158/158, frontend 28/28, frontend build clean, Docker backend/frontend healthy on
+  8420/5420, live fixture upload completed with `overall_risk: Critical`, 7 findings, and 1
+  missing clause.
+
+## P9 — Case-Study Alignment
+- [x] Add in-app Architecture page. `/architecture` explains the local tech stack and secure
+  data flow required by the Part 2 deliverable: React/Vite, FastAPI, Haystack, Ollama-compatible
+  local/LAN model endpoint, Qdrant, SQLite, local parsing, deterministic playbook authority,
+  trust boundaries, and retention cleanup.
+- [x] Add approved-template drafting support. Backend attaches `suggested_draft_clause` to
+  findings from deterministic templates keyed by `rule_id`; frontend renders it as
+  `Suggested approved clause language` with a Legal-approval disclaimer. No free-form
+  drafting, redlining, or risk-behavior change.
+- [x] Improve Qdrant guidance visibility. Dashboard and review-result screens now explain
+  whether Qdrant supplemental guidance is active or unavailable and state that rule review is
+  unaffected when unavailable. Raw enum values remain hidden from users.
+
 ## Sequence Rule
 Follow `IMPLEMENTATION_PHASE_PLAN.md`. Complete P0 before real parsing, complete P1 before deterministic rule evaluation, and complete P2 before model-provider complexity. Do not start hosted-provider work until D-05 is accepted or replaced. Do not deploy until D-07 is accepted or replaced and the applicable security checks in `TEST_AND_ACCEPTANCE_PLAN.md` pass.

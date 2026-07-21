@@ -1,3 +1,6 @@
+import ipaddress
+from urllib.parse import urlsplit, urlunsplit
+
 from fastapi import APIRouter
 
 from app.api import errors
@@ -32,14 +35,32 @@ _ALLOWED_PROVIDERS = {"ollama", "anthropic", "openai", "gemini"}
 _SAVEABLE_PROVIDERS = {"ollama"}
 
 
+def _mask_base_url_for_display(base_url: str) -> str:
+    """Hide literal IP hosts before returning config to the browser."""
+    try:
+        parsed = urlsplit(base_url)
+        hostname = parsed.hostname
+        if not hostname:
+            return "configured, hidden"
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        return base_url
+
+    masked_host = "***.***.***.***"
+    if parsed.port:
+        masked_host = f"{masked_host}:{parsed.port}"
+    return urlunsplit((parsed.scheme, masked_host, parsed.path, parsed.query, parsed.fragment))
+
+
 @router.get("", response_model=ConfigOut)
 async def get_config() -> ConfigOut:
     settings = get_settings()
+    base_url = _runtime_override["base_url_display"] or settings.base_url_display
     return ConfigOut(
         deployment_mode=settings.deployment_mode,  # type: ignore[arg-type]
         provider_type=_runtime_override["provider_type"] or settings.provider_type,
         model_name=_runtime_override["model_name"] or settings.model_name,
-        base_url_display=_runtime_override["base_url_display"] or settings.base_url_display,
+        base_url_display=_mask_base_url_for_display(base_url),
         has_credential=_runtime_override["has_credential"],
         playbook_id=settings.playbook_id,
         synthetic_data_only=settings.deployment_mode == "demo",

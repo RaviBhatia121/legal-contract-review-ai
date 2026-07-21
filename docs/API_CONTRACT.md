@@ -41,8 +41,76 @@ Response: `202 Accepted`
 }
 ```
 
+## `GET /api/v1/reviews`
+Summary-only review history for the dashboard (P8.1). Never returns
+`evidence_text`, full `findings`/`missing_clauses`, `parsed_text`, or any
+model/credential internals.
+
+Query parameters:
+- `limit`: optional integer, default `20`, max `50` (`422` if exceeded).
+- `offset`: optional integer, default `0`.
+
+Response: `200 OK`
+
+```json
+{
+  "items": [
+    {
+      "review_id": "uuid",
+      "document_name": "sentinel-support-agreement.pdf",
+      "status": "completed",
+      "overall_risk": "Critical",
+      "created_at": "2026-07-20T10:00:00Z",
+      "completed_at": "2026-07-20T10:00:05Z",
+      "findings_total": 8,
+      "missing_clause_count": 1,
+      "needs_review_count": 0,
+      "deployment_mode": "local",
+      "retrieval_mode": "degraded_full_rules",
+      "mode_used": "deterministic",
+      "fallback_used": false
+    }
+  ],
+  "limit": 20,
+  "offset": 0
+}
+```
+
+Ordered by `created_at` descending. Includes reviews of any status; for a
+non-completed review, `overall_risk`/`completed_at` are `null` and the
+finding counts are `0`.
+
+**Retention:** applies the same lazy delete-on-read policy as
+`GET /reviews/{review_id}` (`app/services/retention.py`, shared by both
+routes) — a terminal review past its retention window is deleted the moment
+it's encountered on a list page and excluded from the response. **A
+returned page may therefore contain fewer than `limit` items** when expired
+rows were purged during that call; this is expected, not a bug. See
+`docs/SECURITY_AND_DATA.md`'s PoC-retention note.
+
+Aggregate counts (`findings_total`, `missing_clause_count`,
+`needs_review_count`) are computed with one grouped aggregate query per
+list call (not per-row), consistent for any page size up to `limit=50`.
+
 ## `GET /api/v1/reviews/{review_id}`
 Return the in-progress, completed, or failed contract from `OUTPUT_SCHEMA.md`.
+
+As of P9.2, completed finding objects may include:
+
+```json
+{
+  "suggested_draft_clause": {
+    "text": "Supplier shall process and store Customer Data only within Buyer-approved, client-controlled environments...",
+    "source": "approved_template",
+    "approval_note": "Drafting support only; legal approval required before use."
+  }
+}
+```
+
+Rules:
+- deterministic approved-template support only; no free-form drafting endpoint exists
+- keyed by `rule_id`, not generated from unrestricted user prompts
+- does not affect risk scoring, rule IDs, missing-clause detection, or recommended actions
 
 Response: `200 OK`, `404 Not Found`, or `410 Gone` after retention expiry.
 
@@ -72,8 +140,8 @@ Hosted Demo mode requires admin authorization.
 {
   "deployment_mode": "local",
   "provider_type": "ollama",
-  "model_name": "qwen3:4b",
-  "base_url_display": "http://ollama:11434",
+  "model_name": "qwen3.6:35b",
+  "base_url_display": "http://***.***.***.***:11434",
   "has_credential": false,
   "playbook_id": "defense-services-v1",
   "synthetic_data_only": false
@@ -100,6 +168,46 @@ hardcoding the allowlist client-side.
 
 `implemented: true` is the only thing that determines whether a provider can be saved via
 `PUT /config` — see that endpoint's rules below.
+
+## `GET /api/v1/playbooks/active`
+Returns the active playbook as a read-only, UI-safe view for the Admin Playbook screen
+(P8.8). It does not expose file paths, loader internals, credentials, prompts, or document
+content, and it does not allow playbook mutation.
+
+```json
+{
+  "playbook_id": "defense-services-v1",
+  "playbook_version": "1.0-draft",
+  "editable": false,
+  "edit_policy": "Read-only in this PoC. Playbook CRUD requires versioning, validation, audit trail, rollback, and explicit approval.",
+  "required_clause_types": ["confidentiality", "data_handling"],
+  "clause_families": [
+    {
+      "clause_type": "confidentiality",
+      "required": true,
+      "missing_clause_rule_id": "CONF-003",
+      "rule_count": 3
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "DATA-001",
+      "area": "Data handling",
+      "clause_type": "data_handling",
+      "trigger": "Sensitive data may be processed or stored in external/public cloud or outside approved systems",
+      "severity": "Critical",
+      "recommended_action": "Restrict processing to approved client-controlled environments",
+      "missing_clause_rule": false
+    }
+  ]
+}
+```
+
+Rules:
+- read-only only; no create/update/delete endpoint exists in this PoC
+- return all 27 active rules and all 8 required clause families
+- mark missing-clause rules with `missing_clause_rule: true`
+- CRUD requires a later design for versioning, validation, audit trail, rollback, and explicit approval
 
 ## `PUT /api/v1/config`
 Update allowed runtime configuration. Hosted mode requires admin authorization.
@@ -138,7 +246,9 @@ As of P3, this performs a real reachability check for `provider_type: ollama` (a
 /api/tags` ping against the configured base URL). Any other provider_type returns
 `PROVIDER_UNAVAILABLE` honestly — no cloud adapter is implemented (D-05 remains open). As of
 P5, the admin UI's "Test connection" button calls this endpoint directly and displays the
-result; the endpoint's own behavior is unchanged from P3.
+result. If the configured model is unavailable, the Admin UI explicitly says model-assisted
+review is unavailable and reviews will use deterministic fallback until Ollama/model is
+available.
 
 Response:
 

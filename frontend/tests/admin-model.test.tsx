@@ -22,8 +22,8 @@ import { ApiRequestError, getConfig, getProviders, testConfig, updateConfig } fr
 const BASE_CONFIG: RuntimeConfig = {
   deployment_mode: "local",
   provider_type: "ollama",
-  model_name: "qwen3:4b",
-  base_url_display: "http://ollama:11434",
+  model_name: "qwen3.6:35b",
+  base_url_display: "http://***.***.***.***:11434",
   has_credential: false,
   playbook_id: "defense-services-v1",
   synthetic_data_only: false,
@@ -53,11 +53,28 @@ describe("AdminModel", () => {
 
     renderAdmin();
 
-    await waitFor(() => expect(screen.getByDisplayValue("qwen3:4b")).toBeInTheDocument());
-    expect(screen.getByDisplayValue("http://ollama:11434")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByDisplayValue("qwen3.6:35b")).toBeInTheDocument());
+    expect(screen.getByPlaceholderText(/hidden; enter a new url to replace/i)).toBeInTheDocument();
+    expect(screen.queryByDisplayValue(/192\.168\.0\.72/)).not.toBeInTheDocument();
 
     const credentialInput = screen.getByPlaceholderText("Credential configured") as HTMLInputElement;
     expect(credentialInput.value).toBe("");
+    expect(screen.getByText(/configured, never displayed/i)).toBeInTheDocument();
+  });
+
+  it("explains runtime configuration without overclaiming disabled providers", async () => {
+    vi.mocked(getConfig).mockResolvedValue(BASE_CONFIG);
+    vi.mocked(getProviders).mockResolvedValue(PROVIDERS);
+
+    renderAdmin();
+
+    await waitFor(() => expect(screen.getByRole("heading", { name: /runtime provider configuration/i })).toBeInTheDocument());
+
+    expect(screen.getByText(/not a chatbot setting/i)).toBeInTheDocument();
+    expect(screen.getByText(/final risk labels come from the rule engine/i)).toBeInTheDocument();
+    expect(screen.getByText(/d-05 remains open/i)).toBeInTheDocument();
+    expect(screen.getByText(/no cloud adapter is enabled by this screen/i)).toBeInTheDocument();
+    expect(screen.getByText(/disabled placeholders: anthropic, openai, gemini/i)).toBeInTheDocument();
   });
 
   it("disables not-enabled providers in the select", async () => {
@@ -72,6 +89,7 @@ describe("AdminModel", () => {
     expect(anthropicOption.disabled).toBe(true);
     const ollamaOption = within(select).getByText(/^ollama$/i) as HTMLOptionElement;
     expect(ollamaOption.disabled).toBe(false);
+    expect(screen.getAllByText(/not enabled/i).length).toBeGreaterThanOrEqual(3);
   });
 
   it("saves an updated model name and shows confirmation", async () => {
@@ -82,13 +100,14 @@ describe("AdminModel", () => {
 
     renderAdmin();
 
-    await waitFor(() => expect(screen.getByDisplayValue("qwen3:4b")).toBeInTheDocument());
-    const modelInput = screen.getByDisplayValue("qwen3:4b");
+    await waitFor(() => expect(screen.getByDisplayValue("qwen3.6:35b")).toBeInTheDocument());
+    const modelInput = screen.getByDisplayValue("qwen3.6:35b");
     await user.clear(modelInput);
     await user.type(modelInput, "qwen3:8b");
     await user.click(screen.getByRole("button", { name: /save/i }));
 
     await waitFor(() => expect(updateConfig).toHaveBeenCalledWith(expect.objectContaining({ model_name: "qwen3:8b" })));
+    expect(updateConfig).toHaveBeenCalledWith(expect.not.objectContaining({ base_url: expect.any(String) }));
     expect(screen.getByText(/configuration saved/i)).toBeInTheDocument();
   });
 
@@ -106,7 +125,7 @@ describe("AdminModel", () => {
 
     renderAdmin();
 
-    await waitFor(() => expect(screen.getByDisplayValue("qwen3:4b")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByDisplayValue("qwen3.6:35b")).toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /save/i }));
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/not yet implemented/i));
@@ -116,7 +135,7 @@ describe("AdminModel", () => {
     const user = userEvent.setup();
     vi.mocked(getConfig).mockResolvedValue(BASE_CONFIG);
     vi.mocked(getProviders).mockResolvedValue(PROVIDERS);
-    const result: ConfigTestResult = { ok: true, provider_type: "ollama", model_name: "qwen3:4b", latency_ms: 42 };
+    const result: ConfigTestResult = { ok: true, provider_type: "ollama", model_name: "qwen3.6:35b", latency_ms: 42 };
     vi.mocked(testConfig).mockResolvedValue(result);
 
     renderAdmin();
@@ -126,6 +145,18 @@ describe("AdminModel", () => {
 
     await waitFor(() => expect(screen.getByText(/connected to ollama/i)).toBeInTheDocument());
     expect(screen.getByText(/42ms/i)).toBeInTheDocument();
+    expect(screen.getByText(/reachability check only/i)).toBeInTheDocument();
+  });
+
+  it("shows the demo-mode configuration lock message", async () => {
+    vi.mocked(getConfig).mockResolvedValue({ ...BASE_CONFIG, deployment_mode: "demo", synthetic_data_only: true });
+    vi.mocked(getProviders).mockResolvedValue(PROVIDERS);
+
+    renderAdmin();
+
+    await waitFor(() => expect(screen.getByDisplayValue("demo")).toBeInTheDocument());
+    expect(screen.getByText(/demo mode locks production configuration changes server-side/i)).toBeInTheDocument();
+    expect(screen.getByText(/clears on service restart/i)).toBeInTheDocument();
   });
 
   it("shows a failed test-connection result without exposing provider internals", async () => {

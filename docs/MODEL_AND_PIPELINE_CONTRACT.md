@@ -4,10 +4,16 @@ Implemented as of P3: Task 1 (`backend/app/model_adapter/ollama_adapter.py`
 via `backend/app/services/haystack_pipeline.py`'s `ClauseClassifierComponent`)
 and Task 2 (`AttributeExtractorComponent`). Only Ollama is wired — cloud
 providers are not implemented, per `TECH_STACK_AND_LICENSES.md` and D-05.
-This path is opt-in (`PART2_CLAUSE_INTELLIGENCE_MODE=model`); the default
-everywhere is P2's deterministic fixture-oriented path
-(`backend/app/services/rule_engine.build_deterministic_clause_inputs`), kept
-as the fallback/test-double — see `IMPLEMENTATION_PHASE_PLAN.md` P3 notes.
+Local Docker Compose uses this path by default against the shared on-prem Ollama VM. The
+code-level default remains P2's deterministic fixture-oriented path
+(`backend/app/services/rule_engine.build_deterministic_clause_inputs`) for
+tests/non-Compose runs and as the rules-only fallback/test-double — see
+`IMPLEMENTATION_PHASE_PLAN.md` P3 notes.
+
+The Ollama adapter strips any Qwen-style `<think>...</think>` block or leading prose and
+passes only the first complete JSON object to Pydantic validation. This keeps model output
+strict at the pipeline boundary while tolerating reasoning-capable local models that ignore
+JSON-only instructions.
 
 ## Principle
 The workflow is deterministic in structure, validation, and scoring. Model generation is probabilistic and must not be described as mathematically deterministic.
@@ -22,7 +28,10 @@ Reproducibility controls:
 - deterministic final rule evaluation and risk aggregation
 
 ## Reference Models
-- Local PoC LLM: `qwen3:4b`, Apache-2.0, served through Docker-based Ollama.
+- Current demo LLM: `qwen3.6:35b`, served through shared on-prem Ollama VM
+  (`http://<ollama-vm-ip>:11434`) so the laptop does not run a heavy local model.
+- Historical P3 validation LLM: `qwen3:4b`, Apache-2.0, served through Docker-based
+  Ollama; retained as evidence, not the current browser-demo default.
 - Optional stronger local validation candidate: `Qwen2.5-7B-Instruct`, Apache-2.0, if the lightweight model fails the golden fixture.
 - Local embeddings: `intfloat/multilingual-e5-small`, MIT; selected to avoid an English-only retrieval path.
 - Hosted demo provider: unresolved and isolated behind the same adapter.

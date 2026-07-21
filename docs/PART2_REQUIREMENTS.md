@@ -18,7 +18,8 @@ The user should be able to:
 3. See extracted clauses.
 4. See risk classifications.
 5. See deviations from the playbook.
-6. See a structured results view.
+6. See suggested approved clause language for flagged risks.
+7. See a structured results view.
 
 ## Language and Document Boundary
 - Golden acceptance fixture: English, digitally generated PDF and DOCX.
@@ -41,7 +42,9 @@ The prototype should show:
 - A clear upload flow
 - A visible processing pipeline
 - A structured findings screen
+- Approved-template drafting support with a legal-approval disclaimer
 - An admin/configuration area to support enterprise deployment confidence
+- A visible local stack and secure data-flow walkthrough
 
 ## Acceptance Criteria
 The Part 2 prototype is ready only when:
@@ -50,5 +53,6 @@ The Part 2 prototype is ready only when:
 - The UI presents findings clearly.
 - The solution can be explained in one short architecture walkthrough.
 - Every finding provides evidence, a playbook rule, severity, and recommended action.
+- Drafting support is template-backed and labelled as requiring Legal approval; no free-form contract generation is presented.
 - The pinned Docker Ollama/Qwen path successfully processes the golden fixture with runtime egress blocked before final delivery; a cloud or fixed-result run cannot substitute for this evidence.
 - Hosted-demo exceptions are clearly labelled and do not change the on-premises target design.

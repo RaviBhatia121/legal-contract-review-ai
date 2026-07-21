@@ -47,6 +47,10 @@ class Review(Base):
     model_provider: Mapped[str | None] = mapped_column(String(64), nullable=True)
     model_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
     model_revision: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    mode_requested: Mapped[str] = mapped_column(String(32), default="deterministic")
+    mode_used: Mapped[str] = mapped_column(String(32), default="deterministic")
+    fallback_used: Mapped[bool] = mapped_column(Boolean, default=False)
+    fallback_reason: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
     deployment_mode: Mapped[str] = mapped_column(String(16), default="local")
     retrieval_mode: Mapped[str] = mapped_column(String(32), default="degraded_full_rules")
